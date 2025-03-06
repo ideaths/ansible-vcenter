@@ -140,7 +140,11 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
     {/* Hiển thị nút Plus khi action là 'destroy' */}
     {vm.action === 'destroy' && (
       <button 
-        onClick={onAddVM}
+        onClick={() => {
+          // Update VM with action: 'apply' first
+          const updatedVM = { ...vm, action: 'apply' };
+          onAddVM(updatedVM);
+        }}
         className={btnStyles.iconBtnPrimary}
         disabled={taskRunning || !vCenterConnected}
         title="Tạo VM mới"

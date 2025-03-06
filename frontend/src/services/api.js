@@ -49,7 +49,10 @@ const apiService = {
    */
   getVMs: async () => {
     try {
-      store.dispatch(startLoading('Đang lấy danh sách VM...'));
+      store.dispatch(startLoading({
+        message: 'Đang lấy danh sách VM...',
+        persist: false // không cần persist cho thao tác ngắn
+      }));
       const response = await apiClient.get('/vms');
       store.dispatch(stopLoading());
       return response.data;
@@ -67,7 +70,10 @@ const apiService = {
    */
   createOrUpdateVM: async (vm) => {
     try {
-      store.dispatch(startLoading('Đang thêm/cập nhật VM...'));
+      store.dispatch(startLoading({
+        message: 'Đang thêm/cập nhật VM...',
+        persist: true // cần persist vì thao tác có thể mất nhiều thời gian
+      }));
       const response = await apiClient.post('/vms', vm);
       store.dispatch(stopLoading());
       return response.data;
@@ -85,7 +91,10 @@ const apiService = {
    */
   deleteVM: async (vmName) => {
     try {
-      store.dispatch(startLoading('Đang xóa VM...'));
+      store.dispatch(startLoading({
+        message: 'Đang xóa VM...',
+        persist: true // cần persist vì thao tác có thể mất nhiều thời gian
+      }));
       const response = await apiClient.delete(`/vms/${vmName}`);
       store.dispatch(stopLoading());
       return response.data;
@@ -103,7 +112,10 @@ const apiService = {
    */
   connectToVCenter: async (config) => {
     try {
-      store.dispatch(startLoading('Đang kết nối tới vCenter...'));
+      store.dispatch(startLoading({
+        message: 'Đang kết nối tới vCenter...',
+        persist: true // cần persist vì thao tác có thể mất nhiều thời gian
+      }));
       const response = await apiClient.post('/vcenter/connect', config);
       store.dispatch(stopLoading());
       return response.data;
@@ -122,7 +134,10 @@ const apiService = {
    */
   powerActionVM: async (vmName, action) => {
     try {
-      store.dispatch(startLoading('Đang thay đổi trạng thái VM...'));
+      store.dispatch(startLoading({
+        message: 'Đang thay đổi trạng thái VM...',
+        persist: true // cần persist vì thao tác có thể mất nhiều thời gian
+      }));
       const response = await apiClient.post(`/vms/${vmName}/power`, { action });
       store.dispatch(stopLoading());
       return response.data;
@@ -139,7 +154,10 @@ const apiService = {
    */
   runAnsible: async () => {
     try {
-      store.dispatch(startLoading('Đang chạy Ansible...'));
+      store.dispatch(startLoading({
+        message: 'Đang chạy Ansible...',
+        persist: true // cần persist vì thao tác có thể mất nhiều thời gian
+      }));
       const response = await apiClient.post('/ansible/run');
       store.dispatch(stopLoading());
       return response.data;

@@ -4,31 +4,42 @@ const loadingSlice = createSlice({
   name: 'loading',
   initialState: {
     isLoading: false,
-    message: ''
+    message: '',
+    persist: false // thêm flag để kiểm soát việc persist
   },
   reducers: {
     startLoading: (state, action) => {
       state.isLoading = true;
-      state.message = action.payload || '';
-      // Lưu state vào localStorage
-      localStorage.setItem('loadingState', JSON.stringify({
-        isLoading: true,
-        message: action.payload || ''
-      }));
+      state.message = action.payload?.message || '';
+      state.persist = action.payload?.persist || false;
+      
+      if (state.persist) {
+        // Chỉ lưu vào localStorage nếu cần persist
+        localStorage.setItem('loadingState', JSON.stringify({
+          isLoading: true,
+          message: state.message,
+          persist: true
+        }));
+      }
     },
     stopLoading: (state) => {
       state.isLoading = false;
       state.message = '';
-      // Xóa state khỏi localStorage
+      state.persist = false;
       localStorage.removeItem('loadingState');
     },
-    // Thêm action để khôi phục state
     restoreLoadingState: (state) => {
       const savedState = localStorage.getItem('loadingState');
       if (savedState) {
-        const { isLoading, message } = JSON.parse(savedState);
-        state.isLoading = isLoading;
-        state.message = message;
+        const { isLoading, message, persist } = JSON.parse(savedState);
+        // Chỉ khôi phục nếu trạng thái trước đó được đánh dấu persist
+        if (persist) {
+          state.isLoading = isLoading;
+          state.message = message;
+          state.persist = persist;
+        } else {
+          localStorage.removeItem('loadingState');
+        }
       }
     }
   }

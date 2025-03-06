@@ -14,8 +14,8 @@ const loadingSlice = createSlice({
       state.persist = action.payload?.persist || false;
       
       if (state.persist) {
-        // Sử dụng sessionStorage thay vì localStorage
-        sessionStorage.setItem('loadingState', JSON.stringify({
+        // Chuyển sang dùng localStorage
+        localStorage.setItem('loadingState', JSON.stringify({
           isLoading: true,
           message: state.message,
           persist: true
@@ -26,10 +26,10 @@ const loadingSlice = createSlice({
       state.isLoading = false;
       state.message = '';
       state.persist = false;
-      sessionStorage.removeItem('loadingState');
+      localStorage.removeItem('loadingState');
     },
     restoreLoadingState: (state) => {
-      const savedState = sessionStorage.getItem('loadingState');
+      const savedState = localStorage.getItem('loadingState');
       if (savedState) {
         const { isLoading, message, persist } = JSON.parse(savedState);
         if (persist) {
@@ -37,7 +37,7 @@ const loadingSlice = createSlice({
           state.message = message;
           state.persist = persist;
         } else {
-          sessionStorage.removeItem('loadingState');
+          localStorage.removeItem('loadingState');
         }
       }
     }

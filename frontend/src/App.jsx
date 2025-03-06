@@ -362,6 +362,38 @@ function App() {
     }
   }, []);
 
+  // Thêm effect để kiểm tra trạng thái Ansible khi load trang
+  useEffect(() => {
+    const checkAnsibleStatus = async () => {
+      try {
+        const status = await apiService.checkAnsibleStatus();
+        if (status.isRunning) {
+          setAnsibleRunning(true);
+          setTaskLog([`Đang chạy Ansible (bắt đầu lúc: ${new Date(status.startTime).toLocaleString()})...`]);
+          
+          // Kiểm tra lại sau mỗi 5 giây
+          const interval = setInterval(async () => {
+            const currentStatus = await apiService.checkAnsibleStatus();
+            if (!currentStatus.isRunning) {
+              setAnsibleRunning(false);
+              setTaskLog(prev => [...prev, 'Ansible đã hoàn thành!']);
+              clearInterval(interval);
+              // Refresh danh sách VM sau khi Ansible hoàn thành
+              fetchVMs();
+            }
+          }, 5000);
+
+          // Cleanup function
+          return () => clearInterval(interval);
+        }
+      } catch (error) {
+        console.error('Error checking Ansible status:', error);
+      }
+    };
+
+    checkAnsibleStatus();
+  }, []);
+
   const dispatch = useDispatch();
 
   useEffect(() => {

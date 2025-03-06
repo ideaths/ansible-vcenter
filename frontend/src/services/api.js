@@ -166,6 +166,20 @@ const apiService = {
       console.error('Lỗi khi chạy Ansible:', error);
       throw error;
     }
+  },
+
+  /**
+   * Kiểm tra trạng thái Ansible
+   * @returns {Promise<Object>} Trạng thái Ansible
+   */
+  checkAnsibleStatus: async () => {
+    try {
+      const response = await apiClient.get('/ansible/status');
+      return response.data;
+    } catch (error) {
+      console.error('Error checking Ansible status:', error);
+      return { isRunning: false };
+    }
   }
 };
 

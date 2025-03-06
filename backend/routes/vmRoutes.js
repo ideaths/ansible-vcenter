@@ -53,6 +53,18 @@ const runAnsiblePlaybook = async (playbook, extraVars) => {
   });
 };
 
+// Thêm biến để lưu trạng thái Ansible job
+let ansibleJobRunning = false;
+let ansibleStartTime = null;
+
+// Endpoint để kiểm tra trạng thái Ansible
+router.get('/ansible/status', (req, res) => {
+  res.json({
+    isRunning: ansibleJobRunning,
+    startTime: ansibleStartTime
+  });
+});
+
 // Lấy danh sách VM
 router.get('/vms', async (req, res) => {
   try {
@@ -187,9 +199,17 @@ router.post('/ansible/run', async (req, res) => {
     
     console.log('Executing Ansible playbook to apply all changes to vCenter');
     
+    // Set trạng thái đang chạy
+    ansibleJobRunning = true;
+    ansibleStartTime = new Date();
+    
     // Chạy Ansible playbook
     try {
       const result = await runAnsiblePlaybook(playbook, extraVars);
+      
+      // Reset trạng thái sau khi chạy xong
+      ansibleJobRunning = false;
+      ansibleStartTime = null;
       
       res.json({
         success: true,
@@ -197,6 +217,9 @@ router.post('/ansible/run', async (req, res) => {
         details: result
       });
     } catch (ansibleError) {
+      // Reset trạng thái nếu có lỗi
+      ansibleJobRunning = false;
+      ansibleStartTime = null;
       console.error('Lỗi khi chạy Ansible playbook:', ansibleError);
       
       res.status(500).json({
@@ -206,6 +229,8 @@ router.post('/ansible/run', async (req, res) => {
       });
     }
   } catch (error) {
+    ansibleJobRunning = false;
+    ansibleStartTime = null;
     console.error('Lỗi khi chuẩn bị chạy Ansible:', error);
     
     res.status(500).json({

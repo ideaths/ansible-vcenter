@@ -126,6 +126,7 @@ function App() {
             onConfigVCenter={() => setShowVCenterConfig(true)}
             onRunAnsible={handleRunAnsible}
             taskRunning={taskRunning}
+            onRefresh={fetchVMs} // Add this line
           />
           
           {/* Log Viewer */}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Square, Edit, Trash2, PowerOff } from 'lucide-react';
+import { Play, Square, Edit, Trash2, PowerOff, Plus } from 'lucide-react';
 import styles from '../../styles/components/VMList/VMTable.module.css';
 import btnStyles from '../../styles/common/buttons.module.css';
 import { VM_STATUS } from '../../constants/vmConstants';
@@ -14,7 +14,8 @@ const VMTable = ({
   taskRunning,
   onEditVM,
   onDeleteVM,
-  onPowerAction
+  onPowerAction,
+  onAddVM
 }) => {
   if (loading) {
     return (
@@ -71,6 +72,7 @@ const VMTable = ({
                     onEditVM={onEditVM}
                     onDeleteVM={onDeleteVM}
                     onPowerAction={onPowerAction}
+                    onAddVM={onAddVM}
                   />
                 </td>
               </tr>
@@ -91,7 +93,7 @@ const VMTable = ({
   );
 };
 
-const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction }) => (
+const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction, onAddVM }) => (
   <div className={styles.actions}>
     {vm.status === VM_STATUS.RUNNING ? (
       <>
@@ -123,12 +125,12 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
           <Play className="h-4 w-4" />
         </button>
         <button 
-          onClick={() => onDeleteVM(vm)}
-          className={btnStyles.iconBtnDanger}
+          onClick={onAddVM}
+          className={btnStyles.iconBtnPrimary}
           disabled={taskRunning || !vCenterConnected}
-          title="Xóa VM"
+          title="Tạo VM mới"
         >
-          <PowerOff className="h-4 w-4" />
+          <Plus className="h-4 w-4" />
         </button>
       </>
     )}

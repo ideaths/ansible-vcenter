@@ -45,3 +45,8 @@
   composes: iconBtn;
   @apply text-blue-600 hover:text-blue-800 hover:bg-blue-50;
 }
+
+.iconBtnPrimary {
+  composes: iconBtn;
+  @apply text-blue-600 hover:text-blue-800 hover:bg-blue-50;
+}

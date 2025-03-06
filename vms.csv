@@ -1,0 +1,3 @@
+action,vm_name,folder,guest_id,template,memory_mb,num_cpus,num_cpu_cores,scsi_type,boot_firmware,network,ip,netmask,gateway,network_type,network_device,disk_size_gb,disk_type,datastore,wait_for_ip,hostname,dns_servers,domain
+create,web-server01,/,rhel8_64Guest,template-redhat8,8192,4,1,paravirtual,bios,VM Network,192.168.1.15,255.255.255.0,192.168.1.1,static,vmxnet3,100,thin,datastore1,yes,web-server01,191.168.1.53,idevops.io.vn
+delete,web-server02,/,rhel8_64Guest,template-redhat8,4096,2,1,paravirtual,bios,VM Network,192.168.1.13,255.255.255.0,192.168.1.1,static,vmxnet3,50,thin,datastore1,yes,web-server02,191.168.1.53,idevops.io.vn

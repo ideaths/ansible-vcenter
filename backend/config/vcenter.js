@@ -1,25 +1,10 @@
 // backend/config/vcenter.js
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
-const { promisify } = require('util');
 const { spawn } = require('child_process');
-
-const readFileAsync = promisify(fs.readFile);
-const writeFileAsync = promisify(fs.writeFile);
 
 // Đường dẫn đến file cấu hình
 const CONFIG_PATH = path.join(__dirname, '../data/vcenter-config.json');
-
-/**
- * Mặc định cấu hình vCenter
- */
-const DEFAULT_CONFIG = {
-  hostname: 'vcenter.idevops.io.vn',
-  username: 'administrator@vsphere.local',
-  password: '',
-  datacenter: 'Home',
-  validateCerts: false
-};
 
 /**
  * Lấy cấu hình vCenter
@@ -28,13 +13,15 @@ const DEFAULT_CONFIG = {
 async function getVCenterConfig() {
   try {
     // Kiểm tra xem file có tồn tại không
-    if (!fs.existsSync(CONFIG_PATH)) {
-      // Tạo file cấu hình mặc định nếu chưa tồn tại
+    try {
+      await fs.access(CONFIG_PATH);
+    } catch {
+      // Nếu file không tồn tại, tạo file với cấu hình mặc định
       await saveVCenterConfig(DEFAULT_CONFIG);
       return DEFAULT_CONFIG;
     }
 
-    const configData = await readFileAsync(CONFIG_PATH, 'utf8');
+    const configData = await fs.readFile(CONFIG_PATH, 'utf8');
     return JSON.parse(configData);
   } catch (error) {
     console.error('Lỗi khi đọc cấu hình vCenter:', error);
@@ -51,9 +38,7 @@ async function saveVCenterConfig(config) {
   try {
     // Tạo thư mục nếu chưa tồn tại
     const dir = path.dirname(CONFIG_PATH);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+    await fs.mkdir(dir, { recursive: true });
 
     // Kiểm tra các trường bắt buộc
     const requiredFields = ['hostname', 'username', 'datacenter'];
@@ -63,18 +48,18 @@ async function saveVCenterConfig(config) {
       }
     });
 
+    // Merge với cấu hình mặc định
+    const fullConfig = { ...DEFAULT_CONFIG, ...config };
+
     // Ghi vào file JSON
-    await writeFileAsync(
+    await fs.writeFile(
       CONFIG_PATH, 
-      JSON.stringify({
-        ...DEFAULT_CONFIG,
-        ...config
-      }, null, 2), 
+      JSON.stringify(fullConfig, null, 2), 
       'utf8'
     );
     console.log('Đã lưu cấu hình vCenter thành công');
 
-    return config;
+    return fullConfig;
   } catch (error) {
     console.error('Lỗi khi lưu cấu hình vCenter:', error);
     throw error;
@@ -82,24 +67,42 @@ async function saveVCenterConfig(config) {
 }
 
 /**
- * Kiểm tra kết nối vCenter bằng Ansible
+ * Mặc định cấu hình vCenter
+ */
+const DEFAULT_CONFIG = {
+  hostname: 'vcenter.idevops.io.vn',
+  username: 'administrator@vsphere.local',
+  password: '',
+  datacenter: 'Home',
+  validateCerts: false
+};
+
+/**
+ * Kiểm tra kết nối vCenter bằng cách sử dụng Python script
  * @param {Object} config Cấu hình vCenter
- * @returns {Promise<boolean>} Kết quả kiểm tra
+ * @returns {Promise<Object>} Kết quả kiểm tra
  */
 async function testVCenterConnection(config) {
   return new Promise((resolve, reject) => {
-    try {
-      // Convert boolean to Python format (True/False)
-      const validateCertsInPython = config.validateCerts ? "True" : "False";
-      
-      const pythonScript = `
+    // Validate input
+    const requiredFields = ['hostname', 'username', 'password', 'datacenter'];
+    for (const field of requiredFields) {
+      if (!config[field]) {
+        return reject(new Error(`Thiếu trường bắt buộc: ${field}`));
+      }
+    }
+
+    // Tạo Python script để kiểm tra kết nối
+    const pythonScript = `
 import sys
 import ssl
+import json
 from pyVim import connect
 from pyVmomi import vim
 
-# Vô hiệu hóa cảnh báo chứng chỉ nếu không xác thực
-if not ${validateCertsInPython}:
+# Tắt cảnh báo chứng chỉ nếu không xác thực
+validate_certs = ${config.validateCerts ? 'True' : 'False'}
+if not validate_certs:
     ssl._create_default_https_context = ssl._create_unverified_context
 
 try:
@@ -121,58 +124,85 @@ try:
             datacenter_found = True
             break
     
-    if not datacenter_found:
-        print(f"Datacenter ${config.datacenter} không tồn tại", file=sys.stderr)
-        sys.exit(1)
-    
     # Ngắt kết nối
     connect.Disconnect(service_instance)
-    print("Kết nối thành công")
+    
+    # Trả về kết quả dưới dạng JSON
+    result = {
+        'success': True,
+        'message': 'Kết nối thành công',
+        'datacenter_found': datacenter_found
+    }
+    print(json.dumps(result))
     sys.exit(0)
+
 except Exception as e:
-    print(f"Lỗi kết nối: {str(e)}", file=sys.stderr)
+    # Trả về lỗi dưới dạng JSON
+    error_result = {
+        'success': False,
+        'message': str(e)
+    }
+    print(json.dumps(error_result))
     sys.exit(1)
 `;
 
-      // Tạo file tạm thời để chứa script Python
-      const tempScriptPath = path.join(__dirname, '../data/temp_vcenter_check.py');
-      fs.writeFileSync(tempScriptPath, pythonScript, 'utf8');
+    // Tạo file tạm thời để chứa script Python
+    const tempScriptPath = path.join(__dirname, '../data/temp_vcenter_check.py');
+    
+    fs.writeFile(tempScriptPath, pythonScript, 'utf8')
+      .then(() => {
+        // Chạy script Python
+        const process = spawn('python3', [tempScriptPath]);
+        
+        let output = '';
+        let errorOutput = '';
 
-      // Chạy script Python
-      const pythonProcess = spawn('python3', [tempScriptPath]);
+        process.stdout.on('data', (data) => {
+          output += data.toString();
+        });
 
-      let output = '';
-      let errorOutput = '';
+        process.stderr.on('data', (data) => {
+          errorOutput += data.toString();
+        });
 
-      pythonProcess.stdout.on('data', (data) => {
-        output += data.toString();
+        process.on('close', async (code) => {
+          // Xóa file tạm
+          try {
+            await fs.unlink(tempScriptPath);
+          } catch {}
+
+          if (code === 0) {
+            try {
+              const result = JSON.parse(output);
+              
+              if (result.success) {
+                // Lưu cấu hình sau khi kiểm tra thành công
+                await saveVCenterConfig(config);
+              }
+              
+              resolve(result);
+            } catch (parseError) {
+              reject(new Error('Lỗi phân tích kết quả'));
+            }
+          } else {
+            try {
+              const errorResult = JSON.parse(errorOutput);
+              resolve(errorResult);
+            } catch {
+              reject(new Error(errorOutput || 'Lỗi không xác định khi kết nối vCenter'));
+            }
+          }
+        });
+
+        process.on('error', (err) => {
+          console.error('Lỗi khi chạy script Python:', err);
+          reject(new Error('Không thể chạy script kiểm tra vCenter'));
+        });
+      })
+      .catch(writeError => {
+        console.error('Lỗi khi tạo file tạm:', writeError);
+        reject(new Error('Không thể tạo script kiểm tra vCenter'));
       });
-
-      pythonProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-      });
-
-      pythonProcess.on('close', async (code) => {
-        // Xóa file tạm thời
-        try {
-          fs.unlinkSync(tempScriptPath);
-        } catch (e) {
-          console.error('Không thể xóa file tạm thời:', e);
-        }
-
-        if (code === 0) {
-          // Lưu cấu hình sau khi kiểm tra thành công
-          await saveVCenterConfig(config);
-          resolve(true);
-        } else {
-          console.error('Lỗi khi kiểm tra kết nối vCenter:', errorOutput);
-          resolve(false);
-        }
-      });
-    } catch (error) {
-      console.error('Lỗi khi kiểm tra kết nối vCenter:', error);
-      resolve(false);
-    }
   });
 }
 

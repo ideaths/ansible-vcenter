@@ -68,7 +68,7 @@
           - size_gb: "{{ item.disk_size_gb | default(20) | int }}"
             type: "{{ item.disk_type | default('thin') }}"
             datastore: "{{ item.datastore | default(omit) }}"
-        wait_for_ip_address: "{{ item.wait_for_ip | default('yes') }}"
+        wait_for_ip_address: "{{ (item.wait_for_ip | default('yes')) | bool }}"
         customization:
           hostname: "{{ item.hostname | default(item.vm_name) }}"
           dns_servers: "{{ (item.dns_servers | default('')).split(',') if (item.dns_servers | default('')) != '' else omit }}"

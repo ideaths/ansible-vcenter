@@ -27,41 +27,23 @@ function App() {
   });
   const [vCenterConnected, setVCenterConnected] = useState(false);
 
-  // Template cho VM mới
-  const emptyVm = {
-    action: 'apply',
-    vm_name: '',
-    num_cpus: 2,
-    memory_mb: 4096,
-    disk_size_gb: 50,
-    ip: '',
-    template: 'template-redhat8',
-    guest_id: 'rhel8_64Guest',
-    network: 'VM Network',
-    datastore: 'datastore1',
-    folder: '/',
-    hostname: '',
-    netmask: '255.255.255.0',
-    gateway: '192.168.1.1'
-  };
-
   // Lấy danh sách VM
   const fetchVMs = async () => {
     setLoading(true);
     setTaskLog(prev => [...prev, `Đang lấy danh sách VM từ server...`]);
     
     try {
-      // Sử dụng API call thực tế
+      // Sử dụng phương thức getVMs từ apiService
       const data = await apiService.getVMs();
       
       setVms(data);
       setTaskLog(prev => [...prev, `Đã lấy ${data.length} VM từ server`]);
     } catch (error) {
       setMessage({
-        text: 'Lỗi khi tải danh sách VM: ' + error.message,
+        text: 'Lỗi khi tải danh sách VM: ' + (error.error || error.message),
         type: 'error'
       });
-      setTaskLog(prev => [...prev, `Lỗi khi lấy danh sách VM: ${error.message}`]);
+      setTaskLog(prev => [...prev, `Lỗi khi lấy danh sách VM: ${error.error || error.message}`]);
     } finally {
       setLoading(false);
     }
@@ -97,11 +79,11 @@ function App() {
       setVCenterConnected(false);
       
       setMessage({
-        text: `Không thể kết nối đến vCenter: ${error.message}`,
+        text: `Không thể kết nối đến vCenter: ${error.error || error.message}`,
         type: 'error'
       });
       
-      setTaskLog(prev => [...prev, `Kết nối đến vCenter thất bại: ${error.message}`]);
+      setTaskLog(prev => [...prev, `Kết nối đến vCenter thất bại: ${error.error || error.message}`]);
     } finally {
       setTaskRunning(false);
     }
@@ -109,13 +91,13 @@ function App() {
 
   // Xử lý thêm VM mới
   const handleAddVM = () => {
-    setCurrentVm({...emptyVm});
+    setCurrentVm(null);
     setShowForm(true);
   };
 
   // Xử lý chỉnh sửa VM
   const handleEditVM = (vm) => {
-    setCurrentVm({...vm});
+    setCurrentVm(vm);
     setShowForm(true);
   };
 
@@ -125,8 +107,8 @@ function App() {
     setShowDeleteConfirm(true);
   };
 
-  // Xử lý khi submit form
-  const handleSubmitVM = async (vm) => {
+  // Xử lý submit form VM
+  const handleSubmitVM = async (vmData) => {
     if (!vCenterConnected) {
       setMessage({
         text: 'Vui lòng kết nối vCenter trước khi thực hiện thao tác này',
@@ -137,20 +119,20 @@ function App() {
     
     setTaskRunning(true);
     setShowLogs(true);
-    setTaskLog(prev => [...prev, `Chuẩn bị chạy Ansible playbook cho VM: ${vm.vm_name}`]);
+    setTaskLog(prev => [...prev, `Chuẩn bị ${vmData.vm_name ? 'cập nhật' : 'thêm'} VM: ${vmData.vm_name || 'Máy ảo mới'}`]);
     
     try {
-      // Gọi API thực tế
-      const result = await apiService.createOrUpdateVM(vm);
+      // Gọi API thêm/cập nhật VM
+      const result = await apiService.createOrUpdateVM(vmData);
       
       if (result.success) {
-        setTaskLog(prev => [...prev, `VM đã được cập nhật thành công trên vCenter`]);
+        setTaskLog(prev => [...prev, `VM đã được ${vmData.vm_name ? 'cập nhật' : 'thêm'} thành công`]);
         
-        // Cập nhật danh sách VM từ kết quả API
+        // Làm mới danh sách VM
         fetchVMs();
         
         setMessage({
-          text: `VM ${vm.vm_name} đã được ${vms.find(v => v.vm_name === vm.vm_name) ? 'cập nhật' : 'thêm'} thành công!`,
+          text: `VM ${vmData.vm_name} đã được ${vmData.vm_name ? 'cập nhật' : 'thêm'} thành công!`,
           type: 'success'
         });
         
@@ -159,9 +141,9 @@ function App() {
         throw new Error(result.message || 'Có lỗi xảy ra khi thao tác VM');
       }
     } catch (error) {
-      setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
+      setTaskLog(prev => [...prev, `Lỗi: ${error.error || error.message}`]);
       setMessage({
-        text: `Lỗi khi thao tác VM: ${error.message}`,
+        text: `Lỗi khi thao tác VM: ${error.error || error.message}`,
         type: 'error'
       });
     } finally {
@@ -169,7 +151,7 @@ function App() {
     }
   };
 
-  // Xử lý khi xóa VM
+  // Xử lý xóa VM
   const handleDeleteVM = async () => {
     if (!currentVm) return;
     
@@ -178,13 +160,13 @@ function App() {
     setTaskLog(prev => [...prev, `Chuẩn bị xóa VM: ${currentVm.vm_name}`]);
     
     try {
-      // Gọi API thực tế
+      // Gọi API xóa VM
       const result = await apiService.deleteVM(currentVm.vm_name);
       
       if (result.success) {
-        setTaskLog(prev => [...prev, `VM đã được xóa thành công trên vCenter`]);
+        setTaskLog(prev => [...prev, `VM đã được xóa thành công`]);
         
-        // Cập nhật danh sách VM từ kết quả API
+        // Làm mới danh sách VM
         fetchVMs();
         
         setMessage({
@@ -197,9 +179,9 @@ function App() {
         throw new Error(result.message || 'Có lỗi xảy ra khi xóa VM');
       }
     } catch (error) {
-      setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
+      setTaskLog(prev => [...prev, `Lỗi: ${error.error || error.message}`]);
       setMessage({
-        text: `Lỗi khi xóa VM: ${error.message}`,
+        text: `Lỗi khi xóa VM: ${error.error || error.message}`,
         type: 'error'
       });
     } finally {
@@ -215,21 +197,25 @@ function App() {
     
     try {
       // Gọi API thay đổi trạng thái nguồn
-      // Cần thêm endpoint này vào API service
       const result = await apiService.powerActionVM(vm.vm_name, action);
       
       if (result.success) {
         setTaskLog(prev => [...prev, `Trạng thái nguồn đã thay đổi thành công!`]);
         
-        // Cập nhật danh sách VM từ kết quả API
+        // Cập nhật danh sách VM
         fetchVMs();
+
+        setMessage({
+          text: `VM ${vm.vm_name} đã được ${action === 'start' ? 'khởi động' : 'dừng'}`,
+          type: 'success'
+        });
       } else {
         throw new Error(result.message || 'Có lỗi xảy ra khi thay đổi trạng thái nguồn');
       }
     } catch (error) {
-      setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
+      setTaskLog(prev => [...prev, `Lỗi: ${error.error || error.message}`]);
       setMessage({
-        text: `Lỗi khi thay đổi trạng thái nguồn: ${error.message}`,
+        text: `Lỗi khi thay đổi trạng thái nguồn: ${error.error || error.message}`,
         type: 'error'
       });
     } finally {

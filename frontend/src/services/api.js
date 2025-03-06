@@ -1,52 +1,45 @@
 // frontend/src/services/api.js
-/**
- * API Service để giao tiếp với backend
- */
+import axios from 'axios';
 
 // Base URL của API
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-/**
- * Tạo headers cơ bản cho request
- * @returns {Object} Headers
- */
-const getHeaders = () => {
-  return {
+// Tạo axios instance
+const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  };
-};
-
-/**
- * Xử lý phản hồi từ API
- * @param {Response} response - Response từ fetch API
- * @returns {Promise} Dữ liệu phản hồi đã được xử lý
- */
-const handleResponse = async (response) => {
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : {};
-  
-  if (!response.ok) {
-    const error = (data && data.error) || response.statusText;
-    return Promise.reject(error);
   }
-  
-  return data;
-};
+});
 
-/**
- * Xử lý lỗi từ API
- * @param {Error} error - Lỗi từ API
- * @throws {Error} Lỗi đã được xử lý
- */
-const handleError = (error) => {
-  console.error('API Error:', error);
-  throw error;
-};
+// Xử lý lỗi chung
+apiClient.interceptors.response.use(
+  response => response,
+  error => {
+    // Xử lý lỗi từ server
+    if (error.response) {
+      // Server trả về lỗi
+      console.error('API Error Response:', error.response.data);
+      return Promise.reject(error.response.data);
+    } else if (error.request) {
+      // Request được gửi nhưng không nhận được response
+      console.error('API No Response:', error.request);
+      return Promise.reject({
+        success: false,
+        error: 'Không thể kết nối tới máy chủ'
+      });
+    } else {
+      // Lỗi khác
+      console.error('API Error:', error.message);
+      return Promise.reject({
+        success: false,
+        error: 'Lỗi không xác định'
+      });
+    }
+  }
+);
 
-/**
- * API Service
- */
 const apiService = {
   /**
    * Lấy danh sách VM
@@ -54,16 +47,14 @@ const apiService = {
    */
   getVMs: async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/vms`, {
-        method: 'GET',
-        headers: getHeaders()
-      });
-      return handleResponse(response);
+      const response = await apiClient.get('/vms');
+      return response.data;
     } catch (error) {
-      return handleError(error);
+      console.error('Lỗi khi lấy danh sách VM:', error);
+      throw error;
     }
   },
-  
+
   /**
    * Thêm hoặc cập nhật VM
    * @param {Object} vm - Thông tin VM
@@ -71,17 +62,14 @@ const apiService = {
    */
   createOrUpdateVM: async (vm) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/vms`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(vm)
-      });
-      return handleResponse(response);
+      const response = await apiClient.post('/vms', vm);
+      return response.data;
     } catch (error) {
-      return handleError(error);
+      console.error('Lỗi khi thêm/cập nhật VM:', error);
+      throw error;
     }
   },
-  
+
   /**
    * Xóa VM
    * @param {string} vmName - Tên VM cần xóa
@@ -89,16 +77,14 @@ const apiService = {
    */
   deleteVM: async (vmName) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/vms/${vmName}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-      });
-      return handleResponse(response);
+      const response = await apiClient.delete(`/vms/${vmName}`);
+      return response.data;
     } catch (error) {
-      return handleError(error);
+      console.error('Lỗi khi xóa VM:', error);
+      throw error;
     }
   },
-  
+
   /**
    * Kiểm tra kết nối vCenter
    * @param {Object} config - Cấu hình vCenter
@@ -106,17 +92,14 @@ const apiService = {
    */
   connectToVCenter: async (config) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/vcenter/connect`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify(config)
-      });
-      return handleResponse(response);
+      const response = await apiClient.post('/vcenter/connect', config);
+      return response.data;
     } catch (error) {
-      return handleError(error);
+      console.error('Lỗi kết nối vCenter:', error);
+      throw error;
     }
   },
-  
+
   /**
    * Thực hiện thay đổi trạng thái nguồn VM (start/stop)
    * @param {string} vmName - Tên VM
@@ -125,14 +108,11 @@ const apiService = {
    */
   powerActionVM: async (vmName, action) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/vms/${vmName}/power`, {
-        method: 'POST',
-        headers: getHeaders(),
-        body: JSON.stringify({ action })
-      });
-      return handleResponse(response);
+      const response = await apiClient.post(`/vms/${vmName}/power`, { action });
+      return response.data;
     } catch (error) {
-      return handleError(error);
+      console.error('Lỗi thay đổi trạng thái VM:', error);
+      throw error;
     }
   }
 };

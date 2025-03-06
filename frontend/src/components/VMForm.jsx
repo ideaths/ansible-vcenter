@@ -2,13 +2,41 @@ import React, { useState, useEffect } from 'react';
 import { XCircle, Save, RefreshCw } from 'lucide-react';
 
 const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
-  const [formData, setFormData] = useState(vm || {});
+  // Giá trị mặc định cho VM
+  const defaultVM = {
+    action: 'apply',
+    vm_name: '',
+    num_cpus: 2,
+    memory_mb: 4096,
+    disk_size_gb: 50,
+    ip: '',
+    template: 'template-redhat8',
+    guest_id: 'rhel8_64Guest',
+    network: 'VM Network', 
+    datastore: 'datastore1',
+    folder: '/',
+    hostname: '',
+    netmask: '255.255.255.0',
+    gateway: '192.168.1.1', 
+    // Thêm các trường mới
+    num_cpu_cores: 1,
+    scsi_type: 'paravirtual',
+    boot_firmware: 'bios',
+    network_type: 'static', 
+    network_device: 'vmxnet3',
+    disk_type: 'thin',
+    wait_for_ip: 'yes',
+    dns_servers: '191.168.1.53',
+    domain: 'idevops.io.vn'
+  };
+
+  const [formData, setFormData] = useState(vm || defaultVM);
   
   // Đồng bộ dữ liệu từ prop khi thay đổi
   useEffect(() => {
-    if (vm) {
-      setFormData(vm);
-    }
+    // Merge dữ liệu prop với giá trị mặc định
+    const mergedData = { ...defaultVM, ...(vm || {}) };
+    setFormData(mergedData);
   }, [vm]);
 
   // Xử lý thay đổi trường input
@@ -19,7 +47,7 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
     if (type === 'checkbox') {
       setFormData({
         ...formData,
-        [name]: checked
+        [name]: checked ? 'yes' : 'no'
       });
     } else if (type === 'number') {
       setFormData({
@@ -38,12 +66,28 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
+    // Validate tên VM
+    if (!formData.vm_name || formData.vm_name.trim() === '') {
+      alert('Tên VM không được để trống');
+      return;
+    }
+
+    // Loại bỏ các trường rỗng
+    const cleanedData = { ...formData };
+    Object.keys(cleanedData).forEach(key => {
+      // Loại bỏ các trường rỗng và null
+      if (cleanedData[key] === '' || cleanedData[key] === null || 
+          (typeof cleanedData[key] === 'string' && cleanedData[key].trim() === '')) {
+        delete cleanedData[key];
+      }
+    });
+
     // Thêm hostname nếu chưa có
-    if (!formData.hostname) {
-      formData.hostname = formData.vm_name;
+    if (!cleanedData.hostname) {
+      cleanedData.hostname = cleanedData.vm_name;
     }
     
-    onSubmit(formData);
+    onSubmit(cleanedData);
   };
 
   return (
@@ -68,7 +112,7 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Tên VM */}
               <div>
-                <label className="block text-sm font-medium text-gray-700">Tên VM</label>
+                <label className="block text-sm font-medium text-gray-700">Tên VM *</label>
                 <input
                   type="text"
                   name="vm_name"
@@ -77,6 +121,7 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   required
                   disabled={isLoading}
+                  placeholder="Nhập tên máy ảo"
                 />
               </div>
               
@@ -257,6 +302,126 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   disabled={isLoading}
                 />
+              </div>
+
+              {/* Số nhân CPU */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Số nhân CPU</label>
+                <input
+                  type="number"
+                  name="num_cpu_cores"
+                  value={formData.num_cpu_cores || 1}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  min="1"
+                  disabled={isLoading}
+                />
+              </div>
+              
+              {/* Loại SCSI */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Loại SCSI</label>
+                <select
+                  name="scsi_type"
+                  value={formData.scsi_type || 'paravirtual'}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  disabled={isLoading}
+                >
+                  <option value="paravirtual">Paravirtual</option>
+                  <option value="lsi">LSI Logic</option>
+                  <option value="buslogic">BusLogic</option>
+                </select>
+              </div>
+
+              {/* Firmware khởi động */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Firmware khởi động</label>
+                <select
+                  name="boot_firmware"
+                  value={formData.boot_firmware || 'bios'}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  disabled={isLoading}
+                >
+                  <option value="bios">BIOS</option>
+                  <option value="efi">EFI</option>
+                </select>
+              </div>
+
+              {/* Loại mạng */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Loại mạng</label>
+                <select
+                  name="network_type"
+                  value={formData.network_type || 'static'}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  disabled={isLoading}
+                >
+                  <option value="static">Tĩnh (Static)</option>
+                  <option value="dhcp">Động (DHCP)</option>
+                </select>
+              </div>
+
+              {/* Loại đĩa */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Loại đĩa</label>
+                <select
+                  name="disk_type"
+                  value={formData.disk_type || 'thin'}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  disabled={isLoading}
+                >
+                  <option value="thin">Thin Provisioning</option>
+                  <option value="thick">Thick Provisioning</option>
+                  <option value="eager_zeroed">Eager Zeroed Thick</option>
+                </select>
+              </div>
+
+              {/* DNS Servers */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">DNS Servers</label>
+                <input
+                  type="text"
+                  name="dns_servers"
+                  value={formData.dns_servers || '191.168.1.53'}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  placeholder="Nhập địa chỉ DNS"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Domain */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Domain</label>
+                <input
+                  type="text"
+                  name="domain"
+                  value={formData.domain || 'idevops.io.vn'}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  placeholder="Nhập domain"
+                  disabled={isLoading}
+                />
+              </div>
+
+              {/* Wait for IP Checkbox */}
+              <div className="flex items-center md:col-span-2">
+                <input
+                  type="checkbox"
+                  id="wait_for_ip"
+                  name="wait_for_ip"
+                  checked={formData.wait_for_ip === 'yes' || formData.wait_for_ip === true}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  disabled={isLoading}
+                />
+                <label htmlFor="wait_for_ip" className="ml-2 block text-sm text-gray-900">
+                  Chờ địa chỉ IP
+                </label>
               </div>
             </div>
             

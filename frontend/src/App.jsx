@@ -55,6 +55,31 @@ function App() {
     }
   }
 
+  // Handle adding new VM
+  const handleAddVM = () => {
+    setCurrentVm(null);
+    setShowForm(true);
+  };
+
+  // Handle editing VM
+  const handleEditVM = (vm) => {
+    setCurrentVm(vm);
+    setShowForm(true);
+  };
+
+  // Handle delete confirmation
+  const handleDeleteConfirm = (vm) => {
+    setCurrentVm(vm);
+    setShowDeleteConfirm(true);
+  };
+
+  // Handle running Ansible
+  const handleRunAnsible = async () => {
+    if (!ansibleRunning) {
+      await runAnsible();
+    }
+  };
+
   // Auto-hide messages after 5 seconds
   useEffect(() => {
     if (message.text) {

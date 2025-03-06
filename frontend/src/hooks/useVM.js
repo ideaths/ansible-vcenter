@@ -31,12 +31,17 @@ export const useVM = (onMessage, onLog, onRefreshVMs) => {
     }
   };
 
-  const handleDeleteVM = async (vm) => {
-    if (!currentVm) return;
+  const handleDeleteVM = async () => {
+    if (!currentVm?.vm_name) {
+      onMessage({
+        text: 'Lỗi: Không tìm thấy tên VM để xóa',
+        type: 'error'
+      });
+      return;
+    }
     
     try {
-      const vmToDelete = { ...vm, action: 'destroy' };
-      const result = await apiService.deleteVM(vmToDelete.vm_name);
+      const result = await apiService.deleteVM(currentVm.vm_name);
       
       if (result.success) {
         onLog(`VM đã được đánh dấu xóa thành công - sử dụng nút "Chạy Ansible" để thực hiện thao tác`);

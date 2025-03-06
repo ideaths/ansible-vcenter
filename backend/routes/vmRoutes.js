@@ -127,11 +127,10 @@ router.delete('/vms/:vmName', async (req, res) => {
   try {
     const { vmName } = req.params;
     
-    // Kiểm tra tên VM
-    if (!vmName) {
+    if (!vmName || vmName === 'undefined') {
       return res.status(400).json({ 
         success: false, 
-        error: 'Tên VM không được để trống' 
+        error: 'Tên VM không hợp lệ hoặc không được cung cấp' 
       });
     }
     

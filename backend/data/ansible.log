@@ -1,0 +1,48 @@
+2025-03-06 13:16:37,571 p=30 u=root n=ansible | [DEPRECATION WARNING]: COMMAND_WARNINGS option, the command warnings feature is
+ being removed. This feature will be removed from ansible-core in version 2.14.
+ Deprecation warnings can be disabled by setting deprecation_warnings=False in 
+ansible.cfg.
+2025-03-06 13:16:37,660 p=30 u=root n=ansible | PLAY [Manage VMs (Apply or Destroy) from CSV file] *****************************
+2025-03-06 13:16:37,669 p=30 u=root n=ansible | TASK [Read VM data from CSV file] **********************************************
+2025-03-06 13:16:37,935 p=30 u=root n=ansible | ok: [127.0.0.1 -> localhost]
+2025-03-06 13:16:37,938 p=30 u=root n=ansible | TASK [Initialize empty lists for apply and destroy actions] ********************
+2025-03-06 13:16:37,948 p=30 u=root n=ansible | ok: [127.0.0.1]
+2025-03-06 13:16:37,951 p=30 u=root n=ansible | TASK [Sort VMs based on action field] ******************************************
+2025-03-06 13:16:37,964 p=30 u=root n=ansible | skipping: [127.0.0.1] => (item={'action': 'destroy', 'vm_name': 'web-server01', 'num_cpus': '8', 'memory_mb': '9216', 'disk_size_gb': '150', 'ip': '192.168.1.15', 'template': 'template-redhat8', 'guest_id': 'rhel8_64Guest', 'network': 'vmn2', 'datastore': 'datastore1', 'folder': '/', 'hostname': 'web-server013', 'netmask': '255.255.255.0', 'gateway': '192.168.1.1', 'num_cpu_cores': '2', 'scsi_type': 'paravirtual', 'boot_firmware': 'bios', 'network_type': 'static', 'network_device': 'vmxnet3', 'disk_type': 'thin', 'wait_for_ip': 'yes', 'dns_servers': '191.168.1.53', 'domain': 'abc.io.vn'}) 
+2025-03-06 13:16:37,970 p=30 u=root n=ansible | ok: [127.0.0.1] => (item={'action': 'apply', 'vm_name': 'web-server02', 'num_cpus': '4', 'memory_mb': '4096', 'disk_size_gb': '50', 'ip': '192.168.1.13', 'template': 'template-redhat8', 'guest_id': 'rhel8_64Guest', 'network': 'VM Network', 'datastore': 'datastore1', 'folder': '/', 'hostname': 'web-server02', 'netmask': '255.255.255.0', 'gateway': '192.168.1.1', 'num_cpu_cores': '1', 'scsi_type': 'paravirtual', 'boot_firmware': 'bios', 'network_type': 'static', 'network_device': 'vmxnet3', 'disk_type': 'thin', 'wait_for_ip': 'yes', 'dns_servers': '191.168.1.53', 'domain': 'idevops.io.vn'})
+2025-03-06 13:16:37,971 p=30 u=root n=ansible | ok: [127.0.0.1] => (item={'action': 'apply', 'vm_name': 'test', 'num_cpus': '2', 'memory_mb': '4096', 'disk_size_gb': '50', 'ip': '192.168.1.17', 'template': 'template-redhat8', 'guest_id': 'rhel8_64Guest', 'network': 'VM Network', 'datastore': 'datastore1', 'folder': '/', 'hostname': 'test', 'netmask': '255.255.255.0', 'gateway': '192.168.1.1', 'num_cpu_cores': '', 'scsi_type': '', 'boot_firmware': '', 'network_type': '', 'network_device': '', 'disk_type': '', 'wait_for_ip': '', 'dns_servers': '', 'domain': ''})
+2025-03-06 13:16:37,976 p=30 u=root n=ansible | TASK [Sort VMs for destruction] ************************************************
+2025-03-06 13:16:37,992 p=30 u=root n=ansible | ok: [127.0.0.1] => (item={'action': 'destroy', 'vm_name': 'web-server01', 'num_cpus': '8', 'memory_mb': '9216', 'disk_size_gb': '150', 'ip': '192.168.1.15', 'template': 'template-redhat8', 'guest_id': 'rhel8_64Guest', 'network': 'vmn2', 'datastore': 'datastore1', 'folder': '/', 'hostname': 'web-server013', 'netmask': '255.255.255.0', 'gateway': '192.168.1.1', 'num_cpu_cores': '2', 'scsi_type': 'paravirtual', 'boot_firmware': 'bios', 'network_type': 'static', 'network_device': 'vmxnet3', 'disk_type': 'thin', 'wait_for_ip': 'yes', 'dns_servers': '191.168.1.53', 'domain': 'abc.io.vn'})
+2025-03-06 13:16:37,994 p=30 u=root n=ansible | skipping: [127.0.0.1] => (item={'action': 'apply', 'vm_name': 'web-server02', 'num_cpus': '4', 'memory_mb': '4096', 'disk_size_gb': '50', 'ip': '192.168.1.13', 'template': 'template-redhat8', 'guest_id': 'rhel8_64Guest', 'network': 'VM Network', 'datastore': 'datastore1', 'folder': '/', 'hostname': 'web-server02', 'netmask': '255.255.255.0', 'gateway': '192.168.1.1', 'num_cpu_cores': '1', 'scsi_type': 'paravirtual', 'boot_firmware': 'bios', 'network_type': 'static', 'network_device': 'vmxnet3', 'disk_type': 'thin', 'wait_for_ip': 'yes', 'dns_servers': '191.168.1.53', 'domain': 'idevops.io.vn'}) 
+2025-03-06 13:16:37,994 p=30 u=root n=ansible | skipping: [127.0.0.1] => (item={'action': 'apply', 'vm_name': 'test', 'num_cpus': '2', 'memory_mb': '4096', 'disk_size_gb': '50', 'ip': '192.168.1.17', 'template': 'template-redhat8', 'guest_id': 'rhel8_64Guest', 'network': 'VM Network', 'datastore': 'datastore1', 'folder': '/', 'hostname': 'test', 'netmask': '255.255.255.0', 'gateway': '192.168.1.1', 'num_cpu_cores': '', 'scsi_type': '', 'boot_firmware': '', 'network_type': '', 'network_device': '', 'disk_type': '', 'wait_for_ip': '', 'dns_servers': '', 'domain': ''}) 
+2025-03-06 13:16:38,002 p=30 u=root n=ansible | TASK [Apply VMs on vCenter] ****************************************************
+2025-03-06 13:16:46,868 p=30 u=root n=ansible | ok: [127.0.0.1 -> localhost] => (item=web-server02)
+2025-03-06 13:16:47,251 p=30 u=root n=ansible | failed: [127.0.0.1 -> localhost] (item=test) => changed=false 
+  ansible_loop_var: item
+  item:
+    action: apply
+    boot_firmware: ''
+    datastore: datastore1
+    disk_size_gb: '50'
+    disk_type: ''
+    dns_servers: ''
+    domain: ''
+    folder: /
+    gateway: 192.168.1.1
+    guest_id: rhel8_64Guest
+    hostname: test
+    ip: 192.168.1.17
+    memory_mb: '4096'
+    netmask: 255.255.255.0
+    network: VM Network
+    network_device: ''
+    network_type: ''
+    num_cpu_cores: ''
+    num_cpus: '2'
+    scsi_type: ''
+    template: template-redhat8
+    vm_name: test
+    wait_for_ip: ''
+  msg: 'argument ''wait_for_ip_address'' is of type <class ''str''> and we were unable to convert to bool: The value '''' is not a valid boolean.  Valid booleans include: 0, ''y'', ''on'', ''t'', 1, ''0'', ''off'', ''true'', ''yes'', ''no'', ''n'', ''1'', ''f'', ''false'''
+2025-03-06 13:16:47,254 p=30 u=root n=ansible | PLAY RECAP *********************************************************************
+2025-03-06 13:16:47,254 p=30 u=root n=ansible | 127.0.0.1                  : ok=4    changed=0    unreachable=0    failed=1    skipped=0    rescued=0    ignored=0   

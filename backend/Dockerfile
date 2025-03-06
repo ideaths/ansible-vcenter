@@ -20,15 +20,6 @@ RUN apk add --no-cache \
 # Tạo thư mục làm việc
 WORKDIR /app
 
-# Copy package.json và package-lock.json
-COPY package*.json ./
-
-# Cài đặt dependencies
-RUN npm install
-
-# Copy code
-COPY . .
-
 # Tạo thư mục cần thiết
 RUN mkdir -p \
     data \
@@ -42,8 +33,5 @@ COPY ansible.cfg /etc/ansible/ansible.cfg
 # Cấp quyền cho các thư mục
 RUN chmod -R 755 /app
 
-# Expose port
-EXPOSE 3001
-
 # Command khi container khởi động
-CMD ["node", "index.js"]
+CMD ["sh", "-c", "npm install && node index.js"]

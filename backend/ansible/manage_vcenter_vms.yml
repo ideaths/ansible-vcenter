@@ -6,7 +6,7 @@
   vars:
     vcenter_hostname: "vcenter.idevops.io.vn"
     vcenter_username: "administrator@vsphere.local"
-    vcenter_password: "123abc@A"
+    vcenter_password: ""
     vcenter_validate_certs: false
     datacenter_name: "Home"
     csv_file: "vms.csv"

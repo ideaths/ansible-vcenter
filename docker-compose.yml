@@ -13,6 +13,7 @@ services:
       - "3001:3001"
     volumes:
       - ./backend:/app
+      - /app/node_modules  # Đây là thay đổi chính: dùng anonymous volume để bảo vệ node_modules
       - ./backend/data:/app/data
       - ./backend/ansible:/etc/ansible/playbooks
       - ansible-cache:/root/.ansible

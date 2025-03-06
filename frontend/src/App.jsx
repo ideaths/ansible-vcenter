@@ -51,41 +51,8 @@ function App() {
     setTaskLog(prev => [...prev, `Đang lấy danh sách VM từ server...`]);
     
     try {
-      // Trong môi trường thực tế, sử dụng API call
-      // const data = await apiService.getVMs();
-      
-      // Dữ liệu mẫu cho phát triển
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const data = [
-        {
-          action: 'apply',
-          vm_name: 'web-server01',
-          num_cpus: 4,
-          memory_mb: 8192,
-          disk_size_gb: 100,
-          ip: '192.168.1.15',
-          template: 'template-redhat8',
-          guest_id: 'rhel8_64Guest',
-          network: 'VM Network',
-          datastore: 'datastore1',
-          folder: '/',
-          status: 'running'
-        },
-        {
-          action: 'apply',
-          vm_name: 'db-server01',
-          num_cpus: 8,
-          memory_mb: 16384,
-          disk_size_gb: 500,
-          ip: '192.168.1.16',
-          template: 'template-redhat8',
-          guest_id: 'rhel8_64Guest',
-          network: 'VM Network',
-          datastore: 'datastore1',
-          folder: '/',
-          status: 'stopped'
-        }
-      ];
+      // Sử dụng API call thực tế
+      const data = await apiService.getVMs();
       
       setVms(data);
       setTaskLog(prev => [...prev, `Đã lấy ${data.length} VM từ server`]);
@@ -106,25 +73,26 @@ function App() {
     setTaskLog(prev => [...prev, `Đang kết nối đến vCenter: ${config.hostname}...`]);
     
     try {
-      // Trong môi trường thực tế sử dụng API call
-      // const result = await apiService.connectToVCenter(config);
+      // Gọi API thực tế để kết nối vCenter
+      const result = await apiService.connectToVCenter(config);
       
-      // Mô phỏng kết nối
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setVCenterConfig(config);
-      setVCenterConnected(true);
-      setShowVCenterConfig(false);
-      
-      setMessage({
-        text: `Đã kết nối thành công đến vCenter: ${config.hostname}`,
-        type: 'success'
-      });
-      
-      setTaskLog(prev => [...prev, `Kết nối đến vCenter thành công!`]);
-      
-      // Lấy danh sách VM sau khi kết nối
-      fetchVMs();
+      if (result.success) {
+        setVCenterConfig(config);
+        setVCenterConnected(true);
+        setShowVCenterConfig(false);
+        
+        setMessage({
+          text: `Đã kết nối thành công đến vCenter: ${config.hostname}`,
+          type: 'success'
+        });
+        
+        setTaskLog(prev => [...prev, `Kết nối đến vCenter thành công!`]);
+        
+        // Lấy danh sách VM sau khi kết nối
+        fetchVMs();
+      } else {
+        throw new Error(result.message || 'Không thể kết nối đến vCenter');
+      }
     } catch (error) {
       setVCenterConnected(false);
       
@@ -172,36 +140,24 @@ function App() {
     setTaskLog(prev => [...prev, `Chuẩn bị chạy Ansible playbook cho VM: ${vm.vm_name}`]);
     
     try {
-      // Trong môi trường thực tế gọi API
-      // const result = await apiService.createOrUpdateVM(vm);
+      // Gọi API thực tế
+      const result = await apiService.createOrUpdateVM(vm);
       
-      // Mô phỏng xử lý
-      setTaskLog(prev => [...prev, `Cập nhật file CSV: vms.csv với cấu hình VM`]);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTaskLog(prev => [...prev, `Kết nối đến vCenter ${vCenterConfig.hostname} với tài khoản ${vCenterConfig.username}`]);
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      setTaskLog(prev => [...prev, `Chạy Ansible playbook: manage_vcenter_vms.yml với biến vcenter_hostname=${vCenterConfig.hostname}, datacenter=${vCenterConfig.datacenter}`]);
-      await new Promise(resolve => setTimeout(resolve, 1800));
-      
-      setTaskLog(prev => [...prev, `Quá trình thực thi Ansible hoàn tất thành công!`]);
-      
-      // Cập nhật danh sách VM
-      if (vms.find(v => v.vm_name === vm.vm_name)) {
-        // Cập nhật VM hiện có
-        setVms(vms.map(v => v.vm_name === vm.vm_name ? {...vm, status: 'running'} : v));
+      if (result.success) {
+        setTaskLog(prev => [...prev, `VM đã được cập nhật thành công trên vCenter`]);
+        
+        // Cập nhật danh sách VM từ kết quả API
+        fetchVMs();
+        
+        setMessage({
+          text: `VM ${vm.vm_name} đã được ${vms.find(v => v.vm_name === vm.vm_name) ? 'cập nhật' : 'thêm'} thành công!`,
+          type: 'success'
+        });
+        
+        setShowForm(false);
       } else {
-        // Thêm VM mới
-        setVms([...vms, {...vm, status: 'running'}]);
+        throw new Error(result.message || 'Có lỗi xảy ra khi thao tác VM');
       }
-      
-      setMessage({
-        text: `VM ${vm.vm_name} đã được ${vms.find(v => v.vm_name === vm.vm_name) ? 'cập nhật' : 'thêm'} thành công!`,
-        type: 'success'
-      });
-      
-      setShowForm(false);
     } catch (error) {
       setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
       setMessage({
@@ -222,30 +178,24 @@ function App() {
     setTaskLog(prev => [...prev, `Chuẩn bị xóa VM: ${currentVm.vm_name}`]);
     
     try {
-      // Trong môi trường thực tế gọi API
-      // const result = await apiService.deleteVM(currentVm.vm_name);
+      // Gọi API thực tế
+      const result = await apiService.deleteVM(currentVm.vm_name);
       
-      // Mô phỏng xử lý
-      setTaskLog(prev => [...prev, `Cập nhật file CSV: đánh dấu VM ${currentVm.vm_name} với action=destroy`]);
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setTaskLog(prev => [...prev, `Kết nối đến vCenter ${vCenterConfig.hostname} với tài khoản ${vCenterConfig.username}`]);
-      await new Promise(resolve => setTimeout(resolve, 1200));
-      
-      setTaskLog(prev => [...prev, `Chạy Ansible playbook: manage_vcenter_vms.yml để xóa VM`]);
-      await new Promise(resolve => setTimeout(resolve, 1800));
-      
-      setTaskLog(prev => [...prev, `VM đã được xóa thành công trên vCenter`]);
-      
-      // Xóa VM khỏi danh sách
-      setVms(vms.filter(vm => vm.vm_name !== currentVm.vm_name));
-      
-      setMessage({
-        text: `VM ${currentVm.vm_name} đã được xóa thành công!`,
-        type: 'success'
-      });
-      
-      setShowDeleteConfirm(false);
+      if (result.success) {
+        setTaskLog(prev => [...prev, `VM đã được xóa thành công trên vCenter`]);
+        
+        // Cập nhật danh sách VM từ kết quả API
+        fetchVMs();
+        
+        setMessage({
+          text: `VM ${currentVm.vm_name} đã được xóa thành công!`,
+          type: 'success'
+        });
+        
+        setShowDeleteConfirm(false);
+      } else {
+        throw new Error(result.message || 'Có lỗi xảy ra khi xóa VM');
+      }
     } catch (error) {
       setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
       setMessage({
@@ -257,22 +207,25 @@ function App() {
     }
   };
 
-  // Mô phỏng thay đổi trạng thái nguồn VM (start/stop)
+  // Xử lý thay đổi trạng thái nguồn VM (start/stop)
   const handlePowerAction = async (vm, action) => {
     setTaskRunning(true);
     setShowLogs(true);
     setTaskLog([`Thực hiện thay đổi trạng thái nguồn: ${action} cho VM: ${vm.vm_name}`]);
     
     try {
-      // Mô phỏng xử lý
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Gọi API thay đổi trạng thái nguồn
+      // Cần thêm endpoint này vào API service
+      const result = await apiService.powerActionVM(vm.vm_name, action);
       
-      setTaskLog(prev => [...prev, `Trạng thái nguồn đã thay đổi thành công!`]);
-      
-      // Cập nhật trạng thái VM
-      setVms(vms.map(v => 
-        v.vm_name === vm.vm_name ? {...v, status: action === 'start' ? 'running' : 'stopped'} : v
-      ));
+      if (result.success) {
+        setTaskLog(prev => [...prev, `Trạng thái nguồn đã thay đổi thành công!`]);
+        
+        // Cập nhật danh sách VM từ kết quả API
+        fetchVMs();
+      } else {
+        throw new Error(result.message || 'Có lỗi xảy ra khi thay đổi trạng thái nguồn');
+      }
     } catch (error) {
       setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
       setMessage({

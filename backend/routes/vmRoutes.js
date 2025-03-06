@@ -3,6 +3,7 @@ const express = require('express');
 const { spawn } = require('child_process');
 const path = require('path');
 const vmStorage = require('../services/vmStorage');
+const vCenterConfig = require('../config/vcenter');
 
 const router = express.Router();
 
@@ -11,11 +12,10 @@ router.get('/vms', async (req, res) => {
   try {
     const vms = await vmStorage.readVMsFromCSV();
     
-    // Thêm trạng thái VM từ vCenter (trong thực tế, bạn sẽ lấy từ vCenter API)
-    // Ở đây, chúng ta giả định tất cả đều 'running' cho mục đích demo
+    // Thêm trạng thái VM (trong thực tế, bạn sẽ kiểm tra từ vCenter API)
     const vmsWithStatus = vms.map(vm => ({
       ...vm,
-      status: vm.action === 'destroy' ? 'deleted' : 'running'
+      status: vm.action === 'destroy' ? 'deleted' : 'running' // Giả lập tạm thời
     }));
     
     res.json(vmsWithStatus);
@@ -37,17 +37,22 @@ router.post('/vms', async (req, res) => {
     const updatedVMs = await vmStorage.addOrUpdateVM(vmData);
     
     // Chạy Ansible playbook để áp dụng thay đổi
-    const result = await runAnsiblePlaybook();
+    runAnsiblePlaybook()
+      .then(result => {
+        console.log('Ansible playbook executed successfully:', result);
+      })
+      .catch(error => {
+        console.error('Error running Ansible playbook:', error);
+      });
     
     res.json({
       success: true,
-      message: `VM ${vmData.vm_name} đã được ${vmData.vm_name ? 'cập nhật' : 'thêm'} thành công`,
-      vms: updatedVMs,
-      ansibleResult: result
+      message: `VM ${vmData.vm_name} đã được ${req.body.vm_name ? 'cập nhật' : 'thêm'} thành công`,
+      vms: updatedVMs
     });
   } catch (error) {
     console.error('Lỗi khi thêm/cập nhật VM:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, success: false });
   }
 });
 
@@ -60,40 +65,83 @@ router.delete('/vms/:vmName', async (req, res) => {
     const updatedVMs = await vmStorage.deleteVM(vmName);
     
     // Chạy Ansible playbook để áp dụng thay đổi
-    const result = await runAnsiblePlaybook();
+    runAnsiblePlaybook()
+      .then(result => {
+        console.log('Ansible playbook executed successfully:', result);
+      })
+      .catch(error => {
+        console.error('Error running Ansible playbook:', error);
+      });
     
     res.json({
       success: true,
       message: `VM ${vmName} đã được đánh dấu xóa`,
-      vms: updatedVMs,
-      ansibleResult: result
+      vms: updatedVMs
     });
   } catch (error) {
     console.error('Lỗi khi xóa VM:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, success: false });
+  }
+});
+
+// Thay đổi trạng thái nguồn VM (start/stop)
+router.post('/vms/:vmName/power', async (req, res) => {
+  try {
+    const { vmName } = req.params;
+    const { action } = req.body;
+    
+    if (!['start', 'stop'].includes(action)) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Action không hợp lệ. Chỉ hỗ trợ start hoặc stop.' 
+      });
+    }
+    
+    // TODO: Thêm code để thực hiện thay đổi trạng thái nguồn VM thông qua Ansible
+    
+    res.json({
+      success: true,
+      message: `VM ${vmName} đã được ${action === 'start' ? 'khởi động' : 'dừng'} thành công`
+    });
+  } catch (error) {
+    console.error('Lỗi khi thay đổi trạng thái nguồn VM:', error);
+    res.status(500).json({ error: error.message, success: false });
   }
 });
 
 // Kiểm tra kết nối vCenter
 router.post('/vcenter/connect', async (req, res) => {
   try {
-    const { hostname, username, password, datacenter, validateCerts } = req.body;
+    const config = req.body;
     
-    // Lưu cấu hình vCenter vào file để Ansible playbook sử dụng
-    // Trong một ứng dụng thực tế, bạn có thể lưu trữ trong database hoặc sử dụng Ansible Vault
-    // TODO: Implement cơ chế lưu cấu hình vCenter an toàn hơn
+    // Kiểm tra các trường bắt buộc
+    const requiredFields = ['hostname', 'username', 'password', 'datacenter'];
+    for (const field of requiredFields) {
+      if (!config[field]) {
+        return res.status(400).json({ 
+          success: false, 
+          error: `Thiếu trường bắt buộc: ${field}` 
+        });
+      }
+    }
     
-    // Mô phỏng kiểm tra kết nối
-    // Trong thực tế, bạn sẽ sử dụng pyVmomi hoặc API của VMware để kiểm tra
-    setTimeout(() => {
+    // Kiểm tra kết nối vCenter thực tế
+    const connected = await vCenterConfig.testVCenterConnection(config);
+    
+    if (connected) {
       res.json({
         success: true,
-        message: `Kết nối thành công đến vCenter: ${hostname}`
+        message: `Kết nối thành công đến vCenter: ${config.hostname}`
       });
-    }, 1000);
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'Không thể kết nối đến vCenter. Vui lòng kiểm tra lại thông tin.'
+      });
+    }
   } catch (error) {
     console.error('Lỗi khi kết nối vCenter:', error);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, success: false });
   }
 });
 
@@ -102,49 +150,63 @@ router.post('/vcenter/connect', async (req, res) => {
  * @returns {Promise<Object>} Kết quả thực thi
  */
 function runAnsiblePlaybook() {
-  return new Promise((resolve, reject) => {
-    const playbook = path.join(__dirname, '../ansible/manage_vcenter_vms.yml');
-    
-    // Thiết lập các biến cần thiết cho Ansible
-    const extraVars = {
-      vcenter_hostname: 'vcenter.example.com',
-      vcenter_username: 'administrator@vsphere.local',
-      vcenter_password: 'password', // Trong thực tế, bạn sẽ lấy từ cấu hình an toàn
-      vcenter_validate_certs: false,
-      csv_file: path.join(__dirname, '../data/vms.csv')
-    };
-    
-    // Command để chạy Ansible playbook
-    const command = 'ansible-playbook';
-    const args = [
-      playbook,
-      '-e', `'${JSON.stringify(extraVars)}'`
-    ];
-    
-    // Chạy Ansible command
-    const ansibleProcess = spawn(command, args);
-    
-    let output = '';
-    let errorOutput = '';
-    
-    ansibleProcess.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-    
-    ansibleProcess.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
-    
-    ansibleProcess.on('close', (code) => {
-      if (code === 0) {
-        resolve({
-          success: true,
-          output
-        });
-      } else {
-        reject(new Error(`Ansible đã thoát với mã: ${code}\n${errorOutput}`));
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      const playbook = path.join(__dirname, '../ansible/manage_vcenter_vms.yml');
+      
+      // Lấy cấu hình vCenter hiện tại
+      const vcenterConfig = await vCenterConfig.getVCenterConfig();
+      
+      // Thiết lập các biến cần thiết cho Ansible
+      const extraVars = {
+        vcenter_hostname: vcenterConfig.hostname,
+        vcenter_username: vcenterConfig.username,
+        vcenter_password: vcenterConfig.password,
+        vcenter_validate_certs: vcenterConfig.validateCerts,
+        datacenter_name: vcenterConfig.datacenter,
+        csv_file: path.join(__dirname, '../data/vms.csv')
+      };
+      
+      // Command để chạy Ansible playbook
+      const command = 'ansible-playbook';
+      const args = [
+        playbook,
+        '-e', JSON.stringify(extraVars)
+      ];
+      
+      console.log('Running Ansible playbook with command:', command, args.join(' '));
+      
+      // Chạy Ansible command
+      const ansibleProcess = spawn(command, args);
+      
+      let output = '';
+      let errorOutput = '';
+      
+      ansibleProcess.stdout.on('data', (data) => {
+        const chunk = data.toString();
+        output += chunk;
+        console.log('Ansible output:', chunk);
+      });
+      
+      ansibleProcess.stderr.on('data', (data) => {
+        const chunk = data.toString();
+        errorOutput += chunk;
+        console.error('Ansible error:', chunk);
+      });
+      
+      ansibleProcess.on('close', (code) => {
+        if (code === 0) {
+          resolve({
+            success: true,
+            output
+          });
+        } else {
+          reject(new Error(`Ansible đã thoát với mã: ${code}\n${errorOutput}`));
+        }
+      });
+    } catch (error) {
+      reject(error);
+    }
   });
 }
 

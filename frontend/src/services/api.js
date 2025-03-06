@@ -35,6 +35,16 @@ const handleResponse = async (response) => {
 };
 
 /**
+ * Xử lý lỗi từ API
+ * @param {Error} error - Lỗi từ API
+ * @throws {Error} Lỗi đã được xử lý
+ */
+const handleError = (error) => {
+  console.error('API Error:', error);
+  throw error;
+};
+
+/**
  * API Service
  */
 const apiService = {
@@ -50,8 +60,7 @@ const apiService = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error('API Error:', error);
-      throw error;
+      return handleError(error);
     }
   },
   
@@ -69,8 +78,7 @@ const apiService = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error('API Error:', error);
-      throw error;
+      return handleError(error);
     }
   },
   
@@ -87,8 +95,7 @@ const apiService = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error('API Error:', error);
-      throw error;
+      return handleError(error);
     }
   },
   
@@ -106,8 +113,26 @@ const apiService = {
       });
       return handleResponse(response);
     } catch (error) {
-      console.error('API Error:', error);
-      throw error;
+      return handleError(error);
+    }
+  },
+  
+  /**
+   * Thực hiện thay đổi trạng thái nguồn VM (start/stop)
+   * @param {string} vmName - Tên VM
+   * @param {string} action - Hành động (start, stop)
+   * @returns {Promise<Object>} Kết quả thao tác
+   */
+  powerActionVM: async (vmName, action) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/vms/${vmName}/power`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ action })
+      });
+      return handleResponse(response);
+    } catch (error) {
+      return handleError(error);
     }
   }
 };

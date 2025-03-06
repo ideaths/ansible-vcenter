@@ -86,8 +86,8 @@ function App() {
         setVCenterConnected(true);
         setShowVCenterConfig(false);
         
-        // Lưu trạng thái kết nối vào localStorage
-        localStorage.setItem('vCenterConnection', JSON.stringify({
+        // Lưu trạng thái kết nối vào sessionStorage
+        sessionStorage.setItem('vCenterConnection', JSON.stringify({
           config, 
           connected: true,
           timestamp: Date.now()
@@ -108,8 +108,8 @@ function App() {
     } catch (error) {
       setVCenterConnected(false);
       
-      // Xóa thông tin kết nối khỏi localStorage nếu kết nối thất bại
-      localStorage.removeItem('vCenterConnection');
+      // Xóa thông tin kết nối khỏi sessionStorage nếu kết nối thất bại
+      sessionStorage.removeItem('vCenterConnection');
       
       setMessage({
         text: `Không thể kết nối đến vCenter: ${error.error || error.message}`,
@@ -125,7 +125,7 @@ function App() {
   // Ngắt kết nối vCenter
   const disconnectVCenter = () => {
     setVCenterConnected(false);
-    localStorage.removeItem('vCenterConnection');
+    sessionStorage.removeItem('vCenterConnection');
     setShowVCenterConfig(false);
     setMessage({
       text: 'Đã ngắt kết nối khỏi vCenter',
@@ -339,7 +339,7 @@ function App() {
     setTaskLog([`Chào mừng đến với Quản lý VM. Đang khôi phục trạng thái kết nối...`]);
     
     // Kiểm tra xem đã có thông tin kết nối được lưu trữ trước đó chưa
-    const savedConnection = localStorage.getItem('vCenterConnection');
+    const savedConnection = sessionStorage.getItem('vCenterConnection');
     if (savedConnection) {
       try {
         const connectionData = JSON.parse(savedConnection);

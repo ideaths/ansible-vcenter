@@ -5,7 +5,7 @@ const loadingSlice = createSlice({
   initialState: {
     isLoading: false,
     message: '',
-    persist: false // thêm flag để kiểm soát việc persist
+    persist: false
   },
   reducers: {
     startLoading: (state, action) => {
@@ -14,8 +14,8 @@ const loadingSlice = createSlice({
       state.persist = action.payload?.persist || false;
       
       if (state.persist) {
-        // Chỉ lưu vào localStorage nếu cần persist
-        localStorage.setItem('loadingState', JSON.stringify({
+        // Sử dụng sessionStorage thay vì localStorage
+        sessionStorage.setItem('loadingState', JSON.stringify({
           isLoading: true,
           message: state.message,
           persist: true
@@ -26,19 +26,18 @@ const loadingSlice = createSlice({
       state.isLoading = false;
       state.message = '';
       state.persist = false;
-      localStorage.removeItem('loadingState');
+      sessionStorage.removeItem('loadingState');
     },
     restoreLoadingState: (state) => {
-      const savedState = localStorage.getItem('loadingState');
+      const savedState = sessionStorage.getItem('loadingState');
       if (savedState) {
         const { isLoading, message, persist } = JSON.parse(savedState);
-        // Chỉ khôi phục nếu trạng thái trước đó được đánh dấu persist
         if (persist) {
           state.isLoading = isLoading;
           state.message = message;
           state.persist = persist;
         } else {
-          localStorage.removeItem('loadingState');
+          sessionStorage.removeItem('loadingState');
         }
       }
     }

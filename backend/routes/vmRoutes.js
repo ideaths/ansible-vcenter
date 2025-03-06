@@ -153,10 +153,10 @@ router.delete('/vms/:vmName', async (req, res) => {
 
 // Endpoint to handle VM power actions (start/stop)
 router.post('/vms/:vmName/power', async (req, res) => {
+  // Moved extraction of action outside the try block to ensure it's available later
+  const { action } = req.body;
   try {
     const { vmName } = req.params;
-    const { action } = req.body;
-
     if (!['start', 'stop'].includes(action)) {
       return res.status(400).json({ 
         success: false, 

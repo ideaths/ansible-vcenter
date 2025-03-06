@@ -31,10 +31,6 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
     }
 
     const cleanedData = { ...formData };
-    // Keep the original action value from vm prop
-    if (vm?.action) {
-      cleanedData.action = vm.action;
-    }
     
     // Clean up empty fields
     Object.keys(cleanedData).forEach(key => {

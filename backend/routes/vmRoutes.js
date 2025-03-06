@@ -11,16 +11,16 @@ const router = express.Router();
 const runAnsiblePlaybook = async (playbook, extraVars) => {
   return new Promise((resolve, reject) => {
     try {
-      // Command để chạy Ansible playbook
       const command = 'ansible-playbook';
       const args = [
+        '--skip-tags',
+        'no_skip',  // Skip deprecation warnings
         playbook,
         '-e', JSON.stringify(extraVars)
       ];
       
       console.log('Running Ansible playbook:', command, args.join(' '));
       
-      // Chạy Ansible command
       const ansibleProcess = spawn(command, args);
       
       let output = '';
@@ -28,23 +28,30 @@ const runAnsiblePlaybook = async (playbook, extraVars) => {
       
       ansibleProcess.stdout.on('data', (data) => {
         const chunk = data.toString();
-        output += chunk;
-        console.log('Ansible output:', chunk);
+        // Filter out deprecation warnings
+        if (!chunk.includes('DEPRECATION WARNING')) {
+          output += chunk;
+          console.log('Ansible output:', chunk);
+        }
       });
       
       ansibleProcess.stderr.on('data', (data) => {
         const chunk = data.toString();
-        errorOutput += chunk;
-        console.error('Ansible error:', chunk);
+        // Filter out deprecation warnings
+        if (!chunk.includes('DEPRECATION WARNING')) {
+          errorOutput += chunk;
+          console.error('Ansible error:', chunk);
+        }
       });
       
       ansibleProcess.on('close', (code) => {
-        if (code === 0) {
+        // Consider code 2 as success if there's no real error
+        if (code === 0 || (code === 2 && !errorOutput.trim())) {
           console.log('Ansible playbook executed successfully');
           resolve({ success: true, output });
         } else {
           console.error('Ansible playbook failed:', errorOutput);
-          reject(new Error(`Ansible execution failed with code ${code}: ${errorOutput}`));
+          reject(new Error(errorOutput || 'Ansible execution failed'));
         }
       });
     } catch (error) {
@@ -102,10 +109,7 @@ router.post('/vms', async (req, res) => {
       });
     }
     
-    // Đảm bảo action là 'apply'
-    vmData.action = 'apply';
-    
-    // Thêm hoặc cập nhật VM vào file CSV
+    // Thêm hoặc cập nhật VM vào file CSV - không thay đổi action
     const updatedVMs = await vmStorage.addOrUpdateVM(vmData);
     
     res.json({

@@ -95,58 +95,61 @@ const VMTable = ({
 
 const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction, onAddVM }) => (
   <div className={styles.actions}>
+    {/* Power Actions */}
     {vm.status === 'on' ? (
-      <>
-        <button 
-          onClick={() => {
-            const updatedVM = { ...vm, action: 'poweroff', status: 'off' };
-            onPowerAction(updatedVM, 'stop');
-          }}
-          className={btnStyles.iconBtnWarning}
-          disabled={taskRunning || !vCenterConnected}
-          title="Dừng VM"
-        >
-          <Square className="h-4 w-4" />
-        </button>
-        {vm.action === 'apply' && (
-          <button 
-            onClick={() => onDeleteVM(vm)}
-            className={btnStyles.iconBtnDanger}
-            disabled={taskRunning || !vCenterConnected}
-            title="Xóa VM"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        )}
-      </>
+      <button 
+        onClick={() => {
+          const updatedVM = { ...vm, action: 'poweroff', status: 'off' };
+          onPowerAction(updatedVM, 'stop');
+        }}
+        className={btnStyles.iconBtnWarning}
+        disabled={taskRunning || !vCenterConnected}
+        title="Dừng VM"
+      >
+        <Square className="h-4 w-4" />
+      </button>
     ) : (
-      <>
-        <button 
-          onClick={() => {
-            const updatedVM = { ...vm, action: 'poweron', status: 'on' };
-            onPowerAction(updatedVM, 'start');
-          }}
-          className={btnStyles.iconBtnSuccess}
-          disabled={taskRunning || !vCenterConnected}
-          title="Khởi động VM"
-        >
-          <Play className="h-4 w-4" />
-        </button>
-        {vm.action === 'destroy' && (
-          <button 
-            onClick={() => {
-              const updatedVM = { ...vm, action: 'apply' };
-              onAddVM(updatedVM);
-            }}
-            className={btnStyles.iconBtnPrimary}
-            disabled={taskRunning || !vCenterConnected}
-            title="Tạo VM mới"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-        )}
-      </>
+      <button 
+        onClick={() => {
+          const updatedVM = { ...vm, action: 'poweron', status: 'on' };
+          onPowerAction(updatedVM, 'start');
+        }}
+        className={btnStyles.iconBtnSuccess}
+        disabled={taskRunning || !vCenterConnected}
+        title="Khởi động VM"
+      >
+        <Play className="h-4 w-4" />
+      </button>
     )}
+
+    {/* Delete button - show when action is 'apply' */}
+    {vm.action === 'apply' && (
+      <button 
+        onClick={() => onDeleteVM(vm)}
+        className={btnStyles.iconBtnDanger}
+        disabled={taskRunning || !vCenterConnected}
+        title="Xóa VM"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    )}
+
+    {/* Add button - show when action is 'destroy' */}
+    {vm.action === 'destroy' && (
+      <button 
+        onClick={() => {
+          const updatedVM = { ...vm, action: 'apply' };
+          onAddVM(updatedVM);
+        }}
+        className={btnStyles.iconBtnPrimary}
+        disabled={taskRunning || !vCenterConnected}
+        title="Tạo VM mới"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
+    )}
+
+    {/* Edit button - always show */}
     <button 
       onClick={() => onEditVM(vm)}
       className={btnStyles.iconBtnEdit}

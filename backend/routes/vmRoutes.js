@@ -7,6 +7,52 @@ const vCenterConfig = require('../config/vcenter');
 
 const router = express.Router();
 
+// Công cụ để chạy Ansible playbook
+const runAnsiblePlaybook = async (playbook, extraVars) => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Command để chạy Ansible playbook
+      const command = 'ansible-playbook';
+      const args = [
+        playbook,
+        '-e', JSON.stringify(extraVars)
+      ];
+      
+      console.log('Running Ansible playbook:', command, args.join(' '));
+      
+      // Chạy Ansible command
+      const ansibleProcess = spawn(command, args);
+      
+      let output = '';
+      let errorOutput = '';
+      
+      ansibleProcess.stdout.on('data', (data) => {
+        const chunk = data.toString();
+        output += chunk;
+        console.log('Ansible output:', chunk);
+      });
+      
+      ansibleProcess.stderr.on('data', (data) => {
+        const chunk = data.toString();
+        errorOutput += chunk;
+        console.error('Ansible error:', chunk);
+      });
+      
+      ansibleProcess.on('close', (code) => {
+        if (code === 0) {
+          console.log('Ansible playbook executed successfully');
+          resolve({ success: true, output });
+        } else {
+          console.error('Ansible playbook failed:', errorOutput);
+          reject(new Error(`Ansible execution failed with code ${code}: ${errorOutput}`));
+        }
+      });
+    } catch (error) {
+      reject(error);
+    }
+  });
+};
+
 // Lấy danh sách VM
 router.get('/vms', async (req, res) => {
   try {
@@ -31,7 +77,7 @@ router.get('/vms', async (req, res) => {
   }
 });
 
-// Thêm hoặc cập nhật VM
+// Thêm hoặc cập nhật VM (không chạy Ansible)
 router.post('/vms', async (req, res) => {
   try {
     const vmData = req.body;
@@ -50,61 +96,6 @@ router.post('/vms', async (req, res) => {
     // Thêm hoặc cập nhật VM vào file CSV
     const updatedVMs = await vmStorage.addOrUpdateVM(vmData);
     
-    // Chạy Ansible playbook để áp dụng thay đổi
-    try {
-      const playbook = path.join(__dirname, '../ansible/manage_vcenter_vms.yml');
-      
-      // Lấy cấu hình vCenter hiện tại
-      const vcenterConfig = await vCenterConfig.getVCenterConfig();
-      
-      // Thiết lập các biến cần thiết cho Ansible
-      const extraVars = {
-        vcenter_hostname: vcenterConfig.hostname,
-        vcenter_username: vcenterConfig.username,
-        vcenter_password: vcenterConfig.password,
-        vcenter_validate_certs: vcenterConfig.validateCerts,
-        datacenter_name: vcenterConfig.datacenter,
-        csv_file: path.join(__dirname, '../data/vms.csv')
-      };
-      
-      // Command để chạy Ansible playbook
-      const command = 'ansible-playbook';
-      const args = [
-        playbook,
-        '-e', JSON.stringify(extraVars)
-      ];
-      
-      console.log('Running Ansible playbook:', command, args.join(' '));
-      
-      // Chạy Ansible command
-      const ansibleProcess = spawn(command, args);
-      
-      let output = '';
-      let errorOutput = '';
-      
-      ansibleProcess.stdout.on('data', (data) => {
-        const chunk = data.toString();
-        output += chunk;
-        console.log('Ansible output:', chunk);
-      });
-      
-      ansibleProcess.stderr.on('data', (data) => {
-        const chunk = data.toString();
-        errorOutput += chunk;
-        console.error('Ansible error:', chunk);
-      });
-      
-      ansibleProcess.on('close', (code) => {
-        if (code === 0) {
-          console.log('Ansible playbook executed successfully');
-        } else {
-          console.error('Ansible playbook failed:', errorOutput);
-        }
-      });
-    } catch (playbookError) {
-      console.error('Lỗi khi chạy Ansible playbook:', playbookError);
-    }
-    
     res.json({
       success: true,
       message: `VM ${vmData.vm_name} đã được ${req.body.vm_name ? 'cập nhật' : 'thêm'} thành công`,
@@ -119,7 +110,7 @@ router.post('/vms', async (req, res) => {
   }
 });
 
-// Xóa VM
+// Xóa VM (chỉ đánh dấu destroy trong CSV)
 router.delete('/vms/:vmName', async (req, res) => {
   try {
     const { vmName } = req.params;
@@ -135,61 +126,6 @@ router.delete('/vms/:vmName', async (req, res) => {
     // Đánh dấu VM là 'destroy' trong file CSV
     const updatedVMs = await vmStorage.deleteVM(vmName);
     
-    // Chạy Ansible playbook để áp dụng thay đổi
-    try {
-      const playbook = path.join(__dirname, '../ansible/manage_vcenter_vms.yml');
-      
-      // Lấy cấu hình vCenter hiện tại
-      const vcenterConfig = await vCenterConfig.getVCenterConfig();
-      
-      // Thiết lập các biến cần thiết cho Ansible
-      const extraVars = {
-        vcenter_hostname: vcenterConfig.hostname,
-        vcenter_username: vcenterConfig.username,
-        vcenter_password: vcenterConfig.password,
-        vcenter_validate_certs: vcenterConfig.validateCerts,
-        datacenter_name: vcenterConfig.datacenter,
-        csv_file: path.join(__dirname, '../data/vms.csv')
-      };
-      
-      // Command để chạy Ansible playbook
-      const command = 'ansible-playbook';
-      const args = [
-        playbook,
-        '-e', JSON.stringify(extraVars)
-      ];
-      
-      console.log('Running Ansible playbook:', command, args.join(' '));
-      
-      // Chạy Ansible command
-      const ansibleProcess = spawn(command, args);
-      
-      let output = '';
-      let errorOutput = '';
-      
-      ansibleProcess.stdout.on('data', (data) => {
-        const chunk = data.toString();
-        output += chunk;
-        console.log('Ansible output:', chunk);
-      });
-      
-      ansibleProcess.stderr.on('data', (data) => {
-        const chunk = data.toString();
-        errorOutput += chunk;
-        console.error('Ansible error:', chunk);
-      });
-      
-      ansibleProcess.on('close', (code) => {
-        if (code === 0) {
-          console.log('Ansible playbook executed successfully');
-        } else {
-          console.error('Ansible playbook failed:', errorOutput);
-        }
-      });
-    } catch (playbookError) {
-      console.error('Lỗi khi chạy Ansible playbook:', playbookError);
-    }
-    
     res.json({
       success: true,
       message: `VM ${vmName} đã được đánh dấu xóa`,
@@ -204,7 +140,7 @@ router.delete('/vms/:vmName', async (req, res) => {
   }
 });
 
-// Thay đổi trạng thái nguồn VM (start/stop)
+// Đăng ký thay đổi trạng thái nguồn VM (start/stop) - không chạy Ansible
 router.post('/vms/:vmName/power', async (req, res) => {
   try {
     const { vmName } = req.params;
@@ -217,73 +153,64 @@ router.post('/vms/:vmName/power', async (req, res) => {
       });
     }
     
-    // Chuyển đổi action thành trạng thái nguồn cho Ansible
-    // start -> powered-on, stop -> powered-off
-    const powerState = action === 'start' ? 'powered-on' : 'powered-off';
-    
-    // Lấy cấu hình vCenter hiện tại
+    // Chỉ lưu trạng thái mà không thực hiện action
+    res.json({
+      success: true,
+      message: `VM ${vmName} đã được đăng ký thay đổi trạng thái nguồn: ${action}`,
+      status: 'pending'
+    });
+  } catch (error) {
+    console.error('Lỗi khi đăng ký thay đổi trạng thái nguồn VM:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Lỗi không xác định khi đăng ký thay đổi trạng thái VM' 
+    });
+  }
+});
+
+// Endpoint mới: chạy Ansible để áp dụng tất cả thay đổi
+router.post('/ansible/run', async (req, res) => {
+  try {
+    // Lấy cấu hình vCenter
     const vcenterConfig = await vCenterConfig.getVCenterConfig();
     
     // Thiết lập các biến cần thiết cho Ansible
-    const playbook = path.join(__dirname, '../ansible/vm_power_control.yml');
+    const playbook = path.join(__dirname, '../ansible/manage_vcenter_vms.yml');
     const extraVars = {
       vcenter_hostname: vcenterConfig.hostname,
       vcenter_username: vcenterConfig.username,
       vcenter_password: vcenterConfig.password,
       vcenter_validate_certs: vcenterConfig.validateCerts,
       datacenter_name: vcenterConfig.datacenter,
-      vm_name: vmName,
-      power_state: powerState
+      csv_file: path.join(__dirname, '../data/vms.csv')
     };
     
-    // Command để chạy Ansible playbook
-    const command = 'ansible-playbook';
-    const args = [
-      playbook,
-      '-e', JSON.stringify(extraVars)
-    ];
+    console.log('Executing Ansible playbook to apply all changes to vCenter');
     
-    console.log(`Running power ${action} on VM ${vmName}`);
-    
-    // Chạy Ansible command
-    const ansibleProcess = spawn(command, args);
-    
-    let output = '';
-    let errorOutput = '';
-    
-    ansibleProcess.stdout.on('data', (data) => {
-      const chunk = data.toString();
-      output += chunk;
-      console.log('Ansible output:', chunk);
-    });
-    
-    ansibleProcess.stderr.on('data', (data) => {
-      const chunk = data.toString();
-      errorOutput += chunk;
-      console.error('Ansible error:', chunk);
-    });
-    
-    // Trả về kết quả sau khi playbook hoàn thành
-    ansibleProcess.on('close', (code) => {
-      if (code === 0) {
-        console.log(`Successfully ${action} VM ${vmName}`);
-      } else {
-        console.error(`Failed to ${action} VM ${vmName}:`, errorOutput);
-      }
-    });
-    
-    // Gửi phản hồi ngay lập tức mà không đợi playbook hoàn thành
-    // Thực tế có thể cải tiến bằng cách sử dụng WebSocket để gửi kết quả realtime
-    res.json({
-      success: true,
-      message: `VM ${vmName} đang được ${action === 'start' ? 'khởi động' : 'dừng'}`,
-      status: 'processing'
-    });
+    // Chạy Ansible playbook
+    try {
+      const result = await runAnsiblePlaybook(playbook, extraVars);
+      
+      res.json({
+        success: true,
+        message: 'Tất cả thay đổi đã được áp dụng thành công lên vCenter',
+        details: result
+      });
+    } catch (ansibleError) {
+      console.error('Lỗi khi chạy Ansible playbook:', ansibleError);
+      
+      res.status(500).json({
+        success: false,
+        error: ansibleError.message || 'Lỗi không xác định khi chạy Ansible',
+        details: ansibleError
+      });
+    }
   } catch (error) {
-    console.error('Lỗi khi thay đổi trạng thái nguồn VM:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: error.message || 'Lỗi không xác định khi thay đổi trạng thái VM' 
+    console.error('Lỗi khi chuẩn bị chạy Ansible:', error);
+    
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Lỗi không xác định khi chuẩn bị chạy Ansible'
     });
   }
 });

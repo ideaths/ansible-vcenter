@@ -8,8 +8,7 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, is
     password: '',
     datacenter: '',
     validateCerts: false
-  });
-  
+  });    
   // Đồng bộ dữ liệu từ prop khi thay đổi
   useEffect(() => {
     if (config) {

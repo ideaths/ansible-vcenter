@@ -56,7 +56,7 @@ const apiService = {
   },
 
   /**
-   * Thêm hoặc cập nhật VM
+   * Thêm hoặc cập nhật VM (chỉ lưu vào CSV, không chạy Ansible)
    * @param {Object} vm - Thông tin VM
    * @returns {Promise<Object>} Kết quả thao tác
    */
@@ -71,7 +71,7 @@ const apiService = {
   },
 
   /**
-   * Xóa VM
+   * Đánh dấu VM để xóa (chỉ cập nhật CSV, không chạy Ansible)
    * @param {string} vmName - Tên VM cần xóa
    * @returns {Promise<Object>} Kết quả thao tác
    */
@@ -101,7 +101,7 @@ const apiService = {
   },
 
   /**
-   * Thực hiện thay đổi trạng thái nguồn VM (start/stop)
+   * Đăng ký thay đổi trạng thái nguồn VM (start/stop) - không chạy Ansible
    * @param {string} vmName - Tên VM
    * @param {string} action - Hành động (start, stop)
    * @returns {Promise<Object>} Kết quả thao tác
@@ -112,6 +112,20 @@ const apiService = {
       return response.data;
     } catch (error) {
       console.error('Lỗi thay đổi trạng thái VM:', error);
+      throw error;
+    }
+  },
+  
+  /**
+   * Chạy Ansible để thực hiện các thay đổi đã đăng ký lên vCenter
+   * @returns {Promise<Object>} Kết quả thao tác Ansible
+   */
+  runAnsible: async () => {
+    try {
+      const response = await apiClient.post('/ansible/run');
+      return response.data;
+    } catch (error) {
+      console.error('Lỗi khi chạy Ansible:', error);
       throw error;
     }
   }

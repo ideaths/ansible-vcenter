@@ -13,6 +13,7 @@ const VMList = ({
   onDeleteVM, 
   onPowerAction, 
   onConfigVCenter,
+  onRunAnsible,
   taskRunning 
 }) => {
   // Search and filter states
@@ -155,6 +156,15 @@ const VMList = ({
           >
             <Plus className="mr-2 h-4 w-4" />
             Thêm VM mới
+          </button>
+          
+          <button 
+            onClick={onRunAnsible} 
+            className="flex items-center px-4 py-2.5 bg-green-600 text-white rounded-md hover:bg-green-700 shadow-sm transition-colors"
+            disabled={taskRunning || !vCenterConnected}
+          >
+            <Play className="mr-2 h-4 w-4" />
+            Chạy Ansible
           </button>
         </div>
       </div>

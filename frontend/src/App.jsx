@@ -3,6 +3,7 @@ import VMList from './components/VMList';
 import VMForm from './components/VMForm';
 import VCenterConfig from './components/VCenterConfig';
 import LogViewer from './components/LogViewer';
+import LoadingOverlay from './components/LoadingOverlay';
 import apiService from './services/api';
 import { AlertCircle, ServerOff } from 'lucide-react';
 
@@ -15,6 +16,7 @@ function App() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [taskRunning, setTaskRunning] = useState(false);
+  const [ansibleRunning, setAnsibleRunning] = useState(false);
   const [taskLog, setTaskLog] = useState([]);
   const [showLogs, setShowLogs] = useState(false);
   const [showVCenterConfig, setShowVCenterConfig] = useState(false);
@@ -163,7 +165,7 @@ function App() {
     setTaskLog(prev => [...prev, `Chuẩn bị ${vmData.vm_name ? 'cập nhật' : 'thêm'} VM: ${vmData.vm_name || 'Máy ảo mới'}`]);
     
     try {
-      // Gọi API thêm/cập nhật VM
+      // Gọi API thêm/cập nhật VM mà không chạy Ansible
       const result = await apiService.createOrUpdateVM(vmData);
       
       if (result.success) {
@@ -201,17 +203,17 @@ function App() {
     setTaskLog(prev => [...prev, `Chuẩn bị xóa VM: ${currentVm.vm_name}`]);
     
     try {
-      // Gọi API xóa VM
+      // Gọi API xóa VM mà không chạy Ansible
       const result = await apiService.deleteVM(currentVm.vm_name);
       
       if (result.success) {
-        setTaskLog(prev => [...prev, `VM đã được xóa thành công`]);
+        setTaskLog(prev => [...prev, `VM đã được đánh dấu xóa thành công - sử dụng nút "Chạy Ansible" để thực hiện thao tác`]);
         
         // Làm mới danh sách VM
         fetchVMs();
         
         setMessage({
-          text: `VM ${currentVm.vm_name} đã được xóa thành công!`,
+          text: `VM ${currentVm.vm_name} đã được đánh dấu xóa. Vui lòng nhấn "Chạy Ansible" để thực hiện!`,
           type: 'success'
         });
         
@@ -237,30 +239,84 @@ function App() {
     setTaskLog([`Thực hiện thay đổi trạng thái nguồn: ${action} cho VM: ${vm.vm_name}`]);
     
     try {
-      // Gọi API thay đổi trạng thái nguồn
-      const result = await apiService.powerActionVM(vm.vm_name, action);
+      // Gọi API thay đổi trạng thái nguồn sẽ được thực hiện trong nút Chạy Ansible
+      setTaskLog(prev => [...prev, `Power action ${action} đã được đăng ký cho VM: ${vm.vm_name}`]);
       
-      if (result.success) {
-        setTaskLog(prev => [...prev, `Trạng thái nguồn đã thay đổi thành công!`]);
-        
-        // Cập nhật danh sách VM
-        fetchVMs();
-
-        setMessage({
-          text: `VM ${vm.vm_name} đã được ${action === 'start' ? 'khởi động' : 'dừng'}`,
-          type: 'success'
-        });
-      } else {
-        throw new Error(result.message || 'Có lỗi xảy ra khi thay đổi trạng thái nguồn');
-      }
+      // Cập nhật UI ngay lập tức mà không chạy Ansible
+      setMessage({
+        text: `${action === 'start' ? 'Khởi động' : 'Dừng'} VM ${vm.vm_name} đã được đăng ký. Nhấn "Chạy Ansible" để thực hiện.`,
+        type: 'info'
+      });
+      
+      // Chỉ cập nhật trạng thái VM trong UI
+      const updatedVms = vms.map(item => {
+        if (item.vm_name === vm.vm_name) {
+          return {
+            ...item,
+            status: action === 'start' ? 'queued_start' : 'queued_stop',
+            pendingPowerAction: action
+          };
+        }
+        return item;
+      });
+      
+      setVms(updatedVms);
     } catch (error) {
       setTaskLog(prev => [...prev, `Lỗi: ${error.error || error.message}`]);
       setMessage({
-        text: `Lỗi khi thay đổi trạng thái nguồn: ${error.error || error.message}`,
+        text: `Lỗi khi đăng ký thay đổi trạng thái nguồn: ${error.error || error.message}`,
         type: 'error'
       });
     } finally {
       setTaskRunning(false);
+    }
+  };
+
+  // Xử lý chạy Ansible
+  const handleRunAnsible = async () => {
+    if (!vCenterConnected) {
+      setMessage({
+        text: 'Vui lòng kết nối vCenter trước khi thực hiện thao tác này',
+        type: 'error'
+      });
+      return;
+    }
+    
+    setTaskRunning(true);
+    setAnsibleRunning(true); // Set the Ansible running state to show the overlay
+    setShowLogs(true);
+    setTaskLog([`Đang chạy Ansible để thực hiện các thay đổi trên vCenter...`]);
+    
+    try {
+      // Gọi API để chạy Ansible playbook
+      const result = await apiService.runAnsible();
+      
+      if (result.success) {
+        setTaskLog(prev => [
+          ...prev, 
+          `Ansible đã chạy thành công!`,
+          `Danh sách thay đổi đã được áp dụng lên vCenter.`
+        ]);
+        
+        // Làm mới danh sách VM để cập nhật trạng thái
+        fetchVMs();
+        
+        setMessage({
+          text: 'Các thay đổi đã được áp dụng thành công lên vCenter!',
+          type: 'success'
+        });
+      } else {
+        throw new Error(result.message || 'Có lỗi xảy ra khi chạy Ansible');
+      }
+    } catch (error) {
+      setTaskLog(prev => [...prev, `Lỗi khi chạy Ansible: ${error.error || error.message}`]);
+      setMessage({
+        text: `Lỗi khi chạy Ansible: ${error.error || error.message}`,
+        type: 'error'
+      });
+    } finally {
+      setTaskRunning(false);
+      setAnsibleRunning(false); // Reset the Ansible running state when done
     }
   };
 
@@ -306,6 +362,9 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
+      {/* Ansible Running Overlay */}
+      {ansibleRunning && <LoadingOverlay message="Đang thực thi Ansible..." />}
+      
       {/* Header */}
       <header className="bg-blue-700 text-white p-4 shadow-md">
         <div className="container mx-auto">
@@ -347,6 +406,7 @@ function App() {
             onDeleteVM={handleDeleteConfirm}
             onPowerAction={handlePowerAction}
             onConfigVCenter={() => setShowVCenterConfig(true)}
+            onRunAnsible={handleRunAnsible}
             taskRunning={taskRunning}
           />
           

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { restoreLoadingState } from './store/loadingSlice';
+import { restoreLoadingState, startLoading, stopLoading } from './store/loadingSlice';
 import VMList from './components/VMList';
 import VMForm from './components/VMForm';
 import VCenterConfig from './components/VCenterConfig';
@@ -368,6 +368,11 @@ function App() {
       try {
         const status = await apiService.checkAnsibleStatus();
         if (status.isRunning) {
+          // Dispatch loading state khi Ansible đang chạy
+          dispatch(startLoading({
+            message: 'Đang thực thi Ansible...',
+            persist: true
+          }));
           setAnsibleRunning(true);
           setTaskLog([`Đang chạy Ansible (bắt đầu lúc: ${new Date(status.startTime).toLocaleString()})...`]);
           
@@ -375,6 +380,7 @@ function App() {
           const interval = setInterval(async () => {
             const currentStatus = await apiService.checkAnsibleStatus();
             if (!currentStatus.isRunning) {
+              dispatch(stopLoading()); // Stop loading khi hoàn thành
               setAnsibleRunning(false);
               setTaskLog(prev => [...prev, 'Ansible đã hoàn thành!']);
               clearInterval(interval);
@@ -384,15 +390,19 @@ function App() {
           }, 5000);
 
           // Cleanup function
-          return () => clearInterval(interval);
+          return () => {
+            clearInterval(interval);
+            dispatch(stopLoading()); // Đảm bảo stop loading khi unmount
+          };
         }
       } catch (error) {
         console.error('Error checking Ansible status:', error);
+        dispatch(stopLoading()); // Stop loading nếu có lỗi
       }
     };
 
     checkAnsibleStatus();
-  }, []);
+  }, [dispatch]);
 
   const dispatch = useDispatch();
 

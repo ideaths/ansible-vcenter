@@ -5,20 +5,22 @@ const loadingSlice = createSlice({
   initialState: {
     isLoading: false,
     message: '',
-    persist: false
+    persist: false,
+    startTime: null
   },
   reducers: {
     startLoading: (state, action) => {
       state.isLoading = true;
       state.message = action.payload?.message || '';
       state.persist = action.payload?.persist || false;
+      state.startTime = new Date().toISOString();
       
       if (state.persist) {
-        // Chuyển sang dùng localStorage
         localStorage.setItem('loadingState', JSON.stringify({
           isLoading: true,
           message: state.message,
-          persist: true
+          persist: true,
+          startTime: state.startTime
         }));
       }
     },
@@ -26,16 +28,18 @@ const loadingSlice = createSlice({
       state.isLoading = false;
       state.message = '';
       state.persist = false;
+      state.startTime = null;
       localStorage.removeItem('loadingState');
     },
     restoreLoadingState: (state) => {
       const savedState = localStorage.getItem('loadingState');
       if (savedState) {
-        const { isLoading, message, persist } = JSON.parse(savedState);
+        const { isLoading, message, persist, startTime } = JSON.parse(savedState);
         if (persist) {
           state.isLoading = isLoading;
           state.message = message;
           state.persist = persist;
+          state.startTime = startTime;
         } else {
           localStorage.removeItem('loadingState');
         }

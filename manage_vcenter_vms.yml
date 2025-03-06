@@ -1,0 +1,237 @@
+---
+# manage_vms_from_csv.yml - Playbook để tạo hoặc xóa VM trên vCenter từ dữ liệu CSV
+- name: Manage VMs (Create or Delete) from CSV file
+  hosts: localhost
+  gather_facts: false
+  vars:
+    vcenter_hostname: "vcenter.example.com"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: "{{ password }}"
+    vcenter_validate_certs: false
+    datacenter_name: "Home"
+    csv_file: "vms.csv"
+    # Tùy chọn cho VM sau khi cập nhật
+    vm_power_state: "poweredon"  # Có thể thay đổi thành 'poweredoff' hoặc 'rebootguest' nếu cần
+    apply_changes_to_existing_vms: true  # Đặt thành false nếu bạn không muốn áp dụng thay đổi cho VM hiện có
+    force_reboot_after_update: false  # Đặt thành true nếu muốn buộc khởi động lại VM sau khi cập nhật
+  
+  tasks:
+    - name: Read VM data from CSV file
+      community.general.read_csv:
+        path: "{{ csv_file }}"
+      register: vm_data
+      delegate_to: localhost
+
+    - name: Display VM data (debug)
+      debug:
+        var: vm_data
+        verbosity: 1
+    
+    # Khởi tạo danh sách trống
+    - name: Initialize empty lists for create and delete actions
+      set_fact:
+        create_vms: []
+        delete_vms: []
+
+    # Lặp qua mỗi dòng và thêm vào danh sách tương ứng
+    - name: Sort VMs based on action field
+      set_fact:
+        create_vms: "{{ create_vms + [item] }}"
+      with_items: "{{ vm_data.list }}"
+      when: item.action == 'create'
+
+    - name: Sort VMs for deletion
+      set_fact:
+        delete_vms: "{{ delete_vms + [item] }}"
+      with_items: "{{ vm_data.list }}"
+      when: item.action == 'delete'
+
+    - name: Show summary of operations
+      debug:
+        msg: 
+          - "VMs to create/update: {{ create_vms | map(attribute='vm_name') | list }}"
+          - "VMs to delete: {{ delete_vms | map(attribute='vm_name') | list }}"
+
+    # Đã chuyển phần kiểm tra VM tồn tại vào file vm_categorize.yml
+
+    # Khởi tạo danh sách VM mới và cập nhật
+    - name: Initialize empty lists for new and update VMs
+      set_fact:
+        new_vms: []
+        update_vms: []
+
+    # Lặp qua mỗi VM và kiểm tra kết quả để xác định VM mới hay cập nhật
+    - name: Categorize VMs as new or update
+      include_tasks: vm_categorize.yml
+      with_items: "{{ create_vms }}"
+      loop_control:
+        loop_var: "current_vm"
+        label: "{{ current_vm.vm_name }}"
+
+    - name: Show detailed operation list
+      debug:
+        msg:
+          - "VMs to create new: {{ new_vms | map(attribute='vm_name') | list }}"
+          - "VMs to update: {{ update_vms | map(attribute='vm_name') | list }}"
+
+    - name: Create new VMs on vCenter
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        datacenter: "{{ datacenter_name }}"
+        name: "{{ item.vm_name }}"
+        state: present
+        folder: "{{ item.folder | default('/') }}"
+        guest_id: "{{ item.guest_id | default('centos8_64Guest') }}"
+        template: "{{ item.template | default(omit) }}"
+        hardware:
+          memory_mb: "{{ item.memory_mb | default(1024) | int }}"
+          num_cpus: "{{ item.num_cpus | default(1) | int }}"
+          num_cpu_cores_per_socket: "{{ item.num_cpu_cores | default(1) | int }}"
+          scsi: "{{ item.scsi_type | default('paravirtual') }}"
+          boot_firmware: "{{ item.boot_firmware | default('bios') }}"
+          hotadd_cpu: true
+          hotadd_memory: true
+        networks:
+          - name: "{{ item.network | default('VM Network') }}"
+            ip: "{{ item.ip | default(omit) }}"
+            netmask: "{{ item.netmask | default(omit) }}"
+            gateway: "{{ item.gateway | default(omit) }}"
+            type: "{{ item.network_type | default('static') }}"
+            device_type: "{{ item.network_device | default('vmxnet3') }}"
+        disk:
+          - size_gb: "{{ item.disk_size_gb | default(20) | int }}"
+            type: "{{ item.disk_type | default('thin') }}"
+            datastore: "{{ item.datastore | default(omit) }}"
+        wait_for_ip_address: "{{ item.wait_for_ip | default('yes') }}"
+        customization:
+          hostname: "{{ item.hostname | default(item.vm_name) }}"
+          dns_servers: "{{ (item.dns_servers | default('')).split(',') if (item.dns_servers | default('')) != '' else omit }}"
+          domain: "{{ item.domain | default(omit) }}"
+      delegate_to: localhost
+      loop: "{{ new_vms }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+      register: vm_create_results
+      when: new_vms | length > 0
+
+    - name: Update existing VMs (CPU/Memory) on vCenter - SAFETY CHECK
+      debug:
+        msg: "Cập nhật VM {{ item.vm_name }} - An toàn hơn bằng cách KHÔNG sử dụng template."
+      loop: "{{ update_vms }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+      when: update_vms | length > 0
+
+    - name: Update existing VMs (CPU/Memory) on vCenter
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        datacenter: "{{ datacenter_name }}"
+        name: "{{ item.vm_name }}"
+        state: present
+        hardware:
+          memory_mb: "{{ item.memory_mb | default(1024) | int }}"
+          num_cpus: "{{ item.num_cpus | default(1) | int }}"
+          num_cpu_cores_per_socket: "{{ item.num_cpu_cores | default(1) | int }}"
+          hotadd_cpu: true
+          hotadd_memory: true
+        networks:
+          - name: "{{ item.network | default('VM Network') }}"
+            ip: "{{ item.ip | default(omit) }}"
+            netmask: "{{ item.netmask | default(omit) }}"
+            gateway: "{{ item.gateway | default(omit) }}"
+            type: "{{ item.network_type | default('static') }}"
+            device_type: "{{ item.network_device | default('vmxnet3') }}"
+        customization:
+          hostname: "{{ item.hostname | default(item.vm_name) }}"
+          dns_servers: "{{ (item.dns_servers | default('')).split(',') if (item.dns_servers | default('')) != '' else omit }}"
+          domain: "{{ item.domain | default(omit) }}"
+        disk:
+          - size_gb: "{{ item.disk_size_gb | default(omit) | int if item.disk_size_gb is defined and item.disk_size_gb != '' else omit }}"
+            type: "{{ item.disk_type | default('thin') }}"
+            datastore: "{{ item.datastore | default(omit) }}"
+      delegate_to: localhost
+      loop: "{{ update_vms }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+      register: vm_update_results
+      when: update_vms | length > 0 and apply_changes_to_existing_vms | bool
+
+    # Khởi tạo danh sách VM cần quản lý nguồn điện
+    - name: Initialize list for power management
+      set_fact:
+        vms_power_changed: []
+      when: vm_update_results is defined
+
+    # Kiểm tra từng VM đã thay đổi để thêm vào danh sách quản lý nguồn điện
+    - name: Check which VMs need power management
+      include_tasks: vm_power_check.yml
+      with_items: "{{ vm_update_results.results | default([]) }}"
+      loop_control:
+        loop_var: "vm_result"
+        label: "{{ vm_result.item.vm_name | default('unknown') }}"
+      when: 
+        - vm_update_results is defined 
+        - vm_update_results.results is defined
+
+    - name: Manage power state for updated VMs if needed
+      community.vmware.vmware_guest_powerstate:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        name: "{{ item.vm_name }}"
+        state: "{{ vm_power_state }}"
+        force: "{{ force_reboot_after_update | bool }}"
+      delegate_to: localhost
+      loop: "{{ vms_power_changed | default([]) }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+      register: vm_power_results
+      when: vms_power_changed is defined and vms_power_changed | length > 0
+      
+    - name: Delete VMs from vCenter
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        datacenter: "{{ datacenter_name }}"
+        name: "{{ item.vm_name }}"
+        state: absent
+        force: yes
+      delegate_to: localhost
+      loop: "{{ delete_vms }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+      register: vm_delete_results
+      when: delete_vms | length > 0
+
+    - name: Display VM creation results
+      debug:
+        msg: "VM {{ item.item.vm_name }} đã được tạo thành công."
+      loop: "{{ vm_create_results.results | default([]) }}"
+      when: vm_create_results is defined and vm_create_results.changed is defined and item.changed | default(false)
+
+    - name: Display VM update results
+      debug:
+        msg: "VM {{ item.item.vm_name }} đã được cập nhật thành công (CPU: {{ item.item.num_cpus }}, RAM: {{ item.item.memory_mb }}MB)."
+      loop: "{{ vm_update_results.results | default([]) }}"
+      when: vm_update_results is defined and item.changed | default(false)
+
+    - name: Display VM power state changes
+      debug:
+        msg: "Trạng thái nguồn điện của VM {{ item.item.vm_name }} đã được đặt thành {{ vm_power_state }}."
+      loop: "{{ vm_power_results.results | default([]) }}"
+      when: vm_power_results is defined and item.changed | default(false)
+
+    - name: Display VM deletion results
+      debug:
+        msg: "VM {{ item.item.vm_name }} đã được xóa thành công."
+      loop: "{{ vm_delete_results.results | default([]) }}"
+      when: vm_delete_results is defined and item.changed | default(false)

@@ -108,14 +108,16 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
         >
           <Square className="h-4 w-4" />
         </button>
-        <button 
-          onClick={() => onDeleteVM(vm)}
-          className={btnStyles.iconBtnDanger}
-          disabled={taskRunning || !vCenterConnected}
-          title="Xóa VM"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        {vm.action === 'apply' && (
+          <button 
+            onClick={() => onDeleteVM(vm)}
+            className={btnStyles.iconBtnDanger}
+            disabled={taskRunning || !vCenterConnected}
+            title="Xóa VM"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </>
     ) : (
       <>
@@ -130,14 +132,16 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
         >
           <Play className="h-4 w-4" />
         </button>
-        <button 
-          onClick={onAddVM}  // Change this to onAddVM
-          className={btnStyles.iconBtnPrimary}
-          disabled={taskRunning || !vCenterConnected}
-          title="Tạo VM mới"  // Update tooltip
-        >
-          <Plus className="h-4 w-4" />
-        </button>
+        {vm.action === 'destroy' && (
+          <button 
+            onClick={onAddVM}
+            className={btnStyles.iconBtnPrimary}
+            disabled={taskRunning || !vCenterConnected}
+            title="Tạo VM mới"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        )}
       </>
     )}
     <button 

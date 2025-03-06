@@ -1,5 +1,5 @@
-import React from 'react';
-import { Trash2, Edit, Play, Square, Plus, Settings, Server, ServerOff } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Trash2, Edit, Play, Square, Plus, Settings, Server, ServerOff, Search, Filter, X } from 'lucide-react';
 
 const VMList = ({ 
   vms, 
@@ -15,6 +15,46 @@ const VMList = ({
   onConfigVCenter,
   taskRunning 
 }) => {
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [guestOSFilter, setGuestOSFilter] = useState('all');
+
+  // Guest OS mapping for readability and filtering
+  const guestOSMap = {
+    'rhel8_64Guest': 'RHEL 8 (64-bit)',
+    'ubuntu64Guest': 'Ubuntu Linux (64-bit)',
+    'windows9Server64Guest': 'Windows Server 2019 (64-bit)'
+  };
+
+  // Filtered and searched VMs
+  const filteredVMs = useMemo(() => {
+    return vms.filter(vm => {
+      // Search filter
+      const matchesSearch = searchTerm.toLowerCase() === '' || 
+        vm.vm_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vm.ip.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || 
+        (statusFilter === 'running' && vm.status === 'running') ||
+        (statusFilter === 'stopped' && vm.status !== 'running');
+
+      // Guest OS filter
+      const matchesGuestOS = guestOSFilter === 'all' || 
+        guestOSMap[vm.guest_id] === guestOSFilter;
+
+      return matchesSearch && matchesStatus && matchesGuestOS;
+    });
+  }, [vms, searchTerm, statusFilter, guestOSFilter]);
+
+  // Reset all filters
+  const resetFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setGuestOSFilter('all');
+  };
+
   return (
     <div className="bg-white rounded-lg shadow">
       {/* vCenter Status and Toolbar */}
@@ -66,6 +106,64 @@ const VMList = ({
         </div>
       </div>
 
+      {/* Filters and Search */}
+      <div className="p-4 bg-gray-50 flex items-center space-x-2">
+        {/* Search Input */}
+        <div className="relative flex-grow">
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm VM (tên hoặc IP)..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          {searchTerm && (
+            <button 
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X size={20} />
+            </button>
+          )}
+        </div>
+
+        {/* Status Filter */}
+        <select 
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="all">Tất cả trạng thái</option>
+          <option value="running">Đang chạy</option>
+          <option value="stopped">Đã dừng</option>
+        </select>
+
+        {/* Guest OS Filter */}
+        <select 
+          value={guestOSFilter}
+          onChange={(e) => setGuestOSFilter(e.target.value)}
+          className="px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="all">Tất cả OS</option>
+          {Object.entries(guestOSMap).map(([key, value]) => (
+            <option key={key} value={value}>{value}</option>
+          ))}
+        </select>
+
+        {/* Reset Filters */}
+        {(searchTerm !== '' || statusFilter !== 'all' || guestOSFilter !== 'all') && (
+          <button 
+            onClick={resetFilters}
+            className="px-3 py-2 bg-gray-200 rounded hover:bg-gray-300 flex items-center"
+            title="Đặt lại bộ lọc"
+          >
+            <Filter className="mr-1 h-4 w-4" />
+            Đặt lại
+          </button>
+        )}
+      </div>
+
       {/* VM Table */}
       {loading ? (
         <div className="p-8 text-center">
@@ -82,21 +180,23 @@ const VMList = ({
                 <th className="px-6 py-3">RAM (MB)</th>
                 <th className="px-6 py-3">Disk (GB)</th>
                 <th className="px-6 py-3">IP</th>
-                <th className="px-6 py-3">Template</th>
+                <th className="px-6 py-3">Guest OS</th>
                 <th className="px-6 py-3">Trạng thái</th>
                 <th className="px-6 py-3">Hành động</th>
               </tr>
             </thead>
             <tbody>
-              {vms.length > 0 ? (
-                vms.map((vm) => (
+              {filteredVMs.length > 0 ? (
+                filteredVMs.map((vm) => (
                   <tr key={vm.vm_name} className="bg-white border-b hover:bg-gray-50">
                     <td className="px-6 py-4 font-medium">{vm.vm_name}</td>
                     <td className="px-6 py-4">{vm.num_cpus}</td>
                     <td className="px-6 py-4">{vm.memory_mb}</td>
                     <td className="px-6 py-4">{vm.disk_size_gb}</td>
                     <td className="px-6 py-4">{vm.ip}</td>
-                    <td className="px-6 py-4">{vm.template}</td>
+                    <td className="px-6 py-4">
+                      {guestOSMap[vm.guest_id] || 'Không xác định'}
+                    </td>
                     <td className="px-6 py-4">
                       <span className={`px-2 py-1 rounded-full text-xs ${
                         vm.status === 'running' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
@@ -149,7 +249,9 @@ const VMList = ({
                 <tr>
                   <td colSpan="8" className="px-6 py-4 text-center">
                     {vCenterConnected ? 
-                      'Không có VM nào. Hãy thêm VM mới để bắt đầu.' : 
+                      (filteredVMs.length === 0 && (searchTerm || statusFilter !== 'all' || guestOSFilter !== 'all') 
+                        ? 'Không tìm thấy máy ảo phù hợp với bộ lọc' 
+                        : 'Không có VM nào. Hãy thêm VM mới để bắt đầu.') : 
                       'Vui lòng kết nối vCenter để xem danh sách VM.'
                     }
                   </td>
@@ -157,6 +259,13 @@ const VMList = ({
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Search Results Summary */}
+      {!loading && filteredVMs.length > 0 && (
+        <div className="p-4 bg-gray-50 text-sm text-gray-600 border-t">
+          Tìm thấy {filteredVMs.length} máy ảo
         </div>
       )}
     </div>

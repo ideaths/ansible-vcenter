@@ -1,4 +1,4 @@
 action,vm_name,num_cpus,memory_mb,disk_size_gb,ip,template,guest_id,network,datastore,folder,hostname,netmask,gateway,num_cpu_cores,scsi_type,boot_firmware,network_type,network_device,disk_type,wait_for_ip,dns_servers,domain
 destroy,web-server01,8,9216,150,192.168.1.15,template-redhat8,rhel8_64Guest,vmn2,datastore1,/,web-server013,255.255.255.0,192.168.1.1,2,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,abc.io.vn
-apply,web-server02,4,4096,50,192.168.1.13,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,web-server02,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn
-apply,test,2,4096,50,192.168.1.18,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,test,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn
+destroy,web-server02,4,4096,50,192.168.1.13,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,web-server02,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn
+apply,test,3,4096,50,192.168.1.18,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,test,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn

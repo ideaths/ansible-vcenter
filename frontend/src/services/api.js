@@ -155,17 +155,16 @@ const apiService = {
   runAnsible: async () => {
     try {
       store.dispatch(startLoading({
-        message: 'Đang chạy Ansible...',
-        persist: true // cần persist vì thao tác có thể mất nhiều thời gian
+        message: 'Đang thực thi Ansible...',
+        persist: true
       }));
       const response = await apiClient.post('/ansible/run');
-      store.dispatch(stopLoading());
       return response.data;
     } catch (error) {
-      store.dispatch(stopLoading());
       console.error('Lỗi khi chạy Ansible:', error);
       throw error;
     }
+    // Không stopLoading ở đây vì cần đợi kiểm tra trạng thái hoàn thành
   },
 
   /**
@@ -175,9 +174,14 @@ const apiService = {
   checkAnsibleStatus: async () => {
     try {
       const response = await apiClient.get('/ansible/status');
+      // Nếu không còn chạy thì dừng loading
+      if (!response.data.isRunning) {
+        store.dispatch(stopLoading());
+      }
       return response.data;
     } catch (error) {
       console.error('Error checking Ansible status:', error);
+      store.dispatch(stopLoading());
       return { isRunning: false };
     }
   }

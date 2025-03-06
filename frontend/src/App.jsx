@@ -10,6 +10,8 @@ import apiService from './services/api';
 import { AlertCircle, ServerOff } from 'lucide-react';
 
 function App() {
+  const dispatch = useDispatch(); // Move dispatch to the top
+  
   // State
   const [vms, setVms] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -404,8 +406,6 @@ function App() {
     checkAnsibleStatus();
   }, [dispatch]);
 
-  const dispatch = useDispatch();
-
   useEffect(() => {
     // Khôi phục loading state khi component mount
     dispatch(restoreLoadingState());
@@ -413,8 +413,8 @@ function App() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
-      {/* Ansible Running Overlay */}
-      {ansibleRunning && <LoadingOverlay message="Đang thực thi Ansible..." />}
+      {/* Loading Overlay */}
+      <LoadingOverlay />
       
       {/* Header */}
       <header className="bg-blue-700 text-white p-4 shadow-md">

@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { XCircle, RefreshCw } from 'lucide-react';
+import styles from '../styles/components/LogViewer.module.css';
+import btnStyles from '../styles/common/buttons.module.css';
 
 const LogViewer = ({ logs, isLoading, onClose }) => {
   const logEndRef = useRef(null);
@@ -14,45 +16,50 @@ const LogViewer = ({ logs, isLoading, onClose }) => {
     }
   }, [logs]);
 
-  // Create timestamp
-  const getTimestamp = () => {
-    return new Date().toLocaleTimeString();
-  };
-
   return (
-    <div className="bg-gray-800 text-gray-200 rounded-lg shadow p-4 flex flex-col h-64">
-      <div className="flex justify-between items-center mb-2 flex-shrink-0">
-        <h3 className="text-lg font-semibold">Logs</h3>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h3 className={styles.title}>Logs</h3>
         <button 
           onClick={onClose}
-          className="text-gray-400 hover:text-white"
+          className={btnStyles.iconBtn}
+          title="Đóng"
         >
           <XCircle className="h-5 w-5" />
         </button>
       </div>
-      <div 
-        ref={logContainerRef}
-        className="space-y-1 font-mono text-sm overflow-y-auto flex-grow"
-      >
+      
+      <div ref={logContainerRef} className={styles.logContainer}>
         {logs.length > 0 ? (
           logs.map((log, index) => (
-            <div key={index} className="py-1 border-b border-gray-700">
-              <span className="text-gray-500">[{getTimestamp()}]</span> {log}
-            </div>
+            <LogEntry key={index} log={log} />
           ))
         ) : (
-          <div className="py-2 text-gray-400">Chưa có log nào</div>
+          <EmptyState />
         )}
-        {isLoading && (
-          <div className="flex items-center text-blue-400">
-            <RefreshCw className="animate-spin h-4 w-4 mr-2" />
-            Đang thực thi...
-          </div>
-        )}
+        
+        {isLoading && <LoadingIndicator />}
         <div ref={logEndRef} />
       </div>
     </div>
   );
 };
+
+const LogEntry = ({ log }) => (
+  <div className={styles.logEntry}>
+    <span className={styles.timestamp}>[{new Date().toLocaleTimeString()}]</span> {log}
+  </div>
+);
+
+const EmptyState = () => (
+  <div className={styles.emptyState}>Chưa có log nào</div>
+);
+
+const LoadingIndicator = () => (
+  <div className={styles.loadingIndicator}>
+    <RefreshCw className="animate-spin h-4 w-4 mr-2" />
+    Đang thực thi...
+  </div>
+);
 
 export default LogViewer;

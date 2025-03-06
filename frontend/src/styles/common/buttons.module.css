@@ -1,0 +1,47 @@
+.btn {
+  @apply px-4 py-2.5 rounded-md transition-colors flex items-center justify-center;
+}
+
+.btnPrimary {
+  composes: btn;
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.btnSecondary {
+  composes: btn;
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200 border shadow-sm;
+}
+
+.btnDanger {
+  composes: btn;
+  @apply bg-red-600 text-white hover:bg-red-700;
+}
+
+.btnSuccess {
+  composes: btn;
+  @apply bg-green-600 text-white hover:bg-green-700;
+}
+
+.iconBtn {
+  @apply p-1.5 rounded-full transition-colors;
+}
+
+.iconBtnSuccess {
+  composes: iconBtn;
+  @apply text-green-600 hover:text-green-800 hover:bg-green-50;
+}
+
+.iconBtnDanger {
+  composes: iconBtn;
+  @apply text-red-600 hover:text-red-800 hover:bg-red-50;
+}
+
+.iconBtnWarning {
+  composes: iconBtn;
+  @apply text-amber-600 hover:text-amber-800 hover:bg-amber-50;
+}
+
+.iconBtnEdit {
+  composes: iconBtn;
+  @apply text-blue-600 hover:text-blue-800 hover:bg-blue-50;
+}

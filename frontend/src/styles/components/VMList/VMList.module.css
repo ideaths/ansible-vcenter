@@ -1,0 +1,38 @@
+.container {
+  @apply bg-white rounded-lg shadow;
+}
+
+.tableContainer {
+  @apply vm-table-container;
+  max-height: calc(100vh - 300px);
+  @apply overflow-y-auto;
+}
+
+.table {
+  @apply w-full text-sm text-left border-separate border-spacing-0;
+}
+
+.thead {
+  @apply bg-gray-100 text-gray-700 uppercase sticky top-0 z-10;
+}
+
+.tbody {
+  @apply bg-white;
+}
+
+.row {
+  @apply even:bg-gray-50 hover:bg-blue-50 transition-colors duration-150;
+}
+
+.cell {
+  @apply px-4 py-3.5 border-b;
+}
+
+.cellCenter {
+  composes: cell;
+  @apply text-center;
+}
+
+.emptyState {
+  @apply px-6 py-8 text-center text-gray-500;
+}

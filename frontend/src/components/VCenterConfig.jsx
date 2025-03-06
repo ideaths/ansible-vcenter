@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { XCircle, Server, RefreshCw, ServerOff } from 'lucide-react';
+import styles from '../styles/components/VCenterConfig.module.css';
+import btnStyles from '../styles/common/buttons.module.css';
+import { VCENTER_DEFAULT_CONFIG } from '../config/apiConfig';
 
 const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, isConnected }) => {
   const [formData, setFormData] = useState(config || {
@@ -33,16 +36,16 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, is
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
+    <div className={styles.overlay}>
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <div className={styles.header}>
+            <h2 className={styles.title}>
               {isConnected ? 'Cấu hình kết nối vCenter hiện tại' : 'Cấu hình kết nối vCenter'}
             </h2>
             <button 
               onClick={onCancel}
-              className="text-gray-500 hover:text-gray-700"
+              className={btnStyles.iconBtn}
               disabled={isLoading}
               type="button"
             >
@@ -51,31 +54,31 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, is
           </div>
           
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={styles.formGrid}>
               {/* vCenter Hostname */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">vCenter Hostname</label>
+              <div className={styles.formField}>
+                <label className={styles.label}>vCenter Hostname</label>
                 <input
                   type="text"
                   name="hostname"
                   value={formData.hostname}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  placeholder="vcenter.example.com"
+                  className={styles.input}
+                  placeholder={VCENTER_DEFAULT_CONFIG.hostname}
                   required
                   disabled={isLoading}
                 />
               </div>
               
               {/* Username */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Username</label>
+              <div className={styles.formField}>
+                <label className={styles.label}>Username</label>
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className={styles.input}
                   placeholder="administrator@vsphere.local"
                   required
                   disabled={isLoading}
@@ -83,34 +86,34 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, is
               </div>
               
               {/* Password */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Password</label>
+              <div className={styles.formField}>
+                <label className={styles.label}>Password</label>
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className={styles.input}
                   placeholder="Password"
                   required={!isConnected}
                   disabled={isLoading}
                 />
                 {isConnected && !formData.password && (
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className={styles.hint}>
                     Để trống để giữ mật khẩu hiện tại
                   </p>
                 )}
               </div>
               
               {/* Datacenter */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Datacenter</label>
+              <div className={styles.formField}>
+                <label className={styles.label}>Datacenter</label>
                 <input
                   type="text"
                   name="datacenter"
                   value={formData.datacenter}
                   onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  className={styles.input}
                   placeholder="Home"
                   required
                   disabled={isLoading}
@@ -118,28 +121,28 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, is
               </div>
               
               {/* Validate Certs */}
-              <div className="flex items-center md:col-span-2">
+              <div className={`${styles.formField} flex items-center md:col-span-2`}>
                 <input
                   type="checkbox"
                   id="validateCerts"
                   name="validateCerts"
                   checked={formData.validateCerts}
                   onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className={styles.checkbox}
                   disabled={isLoading}
                 />
-                <label htmlFor="validateCerts" className="ml-2 block text-sm text-gray-900">
+                <label htmlFor="validateCerts" className={styles.checkboxLabel}>
                   Xác thực chứng chỉ SSL
                 </label>
               </div>
             </div>
             
-            <div className="mt-6 flex justify-end space-x-3">
+            <div className={styles.footer}>
               {isConnected && (
                 <button
                   type="button"
                   onClick={onDisconnect}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
+                  className={btnStyles.btnDanger}
                   disabled={isLoading}
                 >
                   <ServerOff className="h-4 w-4 mr-2" />
@@ -149,14 +152,14 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, is
               <button
                 type="button"
                 onClick={onCancel}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                className={btnStyles.btnSecondary}
                 disabled={isLoading}
               >
                 Hủy
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
+                className={btnStyles.btnPrimary}
                 disabled={isLoading}
               >
                 {isLoading ? (

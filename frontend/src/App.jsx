@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import VMList from './components/VMList';
 import VMForm from './components/VMForm';
 import VCenterConfig from './components/VCenterConfig';
@@ -26,24 +26,43 @@ function App() {
     datacenter: "Home"
   });
   const [vCenterConnected, setVCenterConnected] = useState(false);
+  
+  // Ref for the main content container
+  const mainContentRef = useRef(null);
+  
+  // Scroll to top when showing forms/modals
+  useEffect(() => {
+    if (showForm || showDeleteConfirm || showVCenterConfig) {
+      // Prevent auto-scrolling when opening modals
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [showForm, showDeleteConfirm, showVCenterConfig]);
 
   // Lấy danh sách VM
   const fetchVMs = async () => {
     setLoading(true);
-    setTaskLog(prev => [...prev, `Đang lấy danh sách VM từ server...`]);
+    const currentLogs = [...taskLog];
+    currentLogs.push(`Đang lấy danh sách VM từ server...`);
+    setTaskLog(currentLogs);
     
     try {
       // Sử dụng phương thức getVMs từ apiService
       const data = await apiService.getVMs();
       
       setVms(data);
-      setTaskLog(prev => [...prev, `Đã lấy ${data.length} VM từ server`]);
+      setTaskLog([...currentLogs, `Đã lấy ${data.length} VM từ server`]);
     } catch (error) {
       setMessage({
         text: 'Lỗi khi tải danh sách VM: ' + (error.error || error.message),
         type: 'error'
       });
-      setTaskLog(prev => [...prev, `Lỗi khi lấy danh sách VM: ${error.error || error.message}`]);
+      setTaskLog([...currentLogs, `Lỗi khi lấy danh sách VM: ${error.error || error.message}`]);
     } finally {
       setLoading(false);
     }
@@ -256,9 +275,9 @@ function App() {
     }
   }, [message]);
 
-  // Khôi phục trạng thái kết nối
+  // Khôi phục trạng thái kết nối khi khởi động ứng dụng
   useEffect(() => {
-    setShowLogs(true);
+    // Only set initial logs, but don't show them automatically
     setTaskLog([`Chào mừng đến với Quản lý VM. Đang khôi phục trạng thái kết nối...`]);
     
     // Kiểm tra xem đã có thông tin kết nối được lưu trữ trước đó chưa
@@ -295,7 +314,7 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow container mx-auto p-4">
+      <main className="flex-grow container mx-auto p-4" ref={mainContentRef}>
         {/* Message Alert */}
         {message.text && (
           <div className={`mb-4 p-3 rounded-md flex items-center ${

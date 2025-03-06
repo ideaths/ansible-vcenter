@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Trash2, Edit, Play, Square, Plus, Settings, Server, ServerOff, Search, Filter, X, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const VMList = ({ 
@@ -24,6 +24,11 @@ const VMList = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, guestOSFilter]);
+
   // Guest OS mapping for readability and filtering
   const guestOSMap = {
     'rhel8_64Guest': 'RHEL 8 (64-bit)',
@@ -33,10 +38,12 @@ const VMList = ({
 
   // Filtered and searched VMs
   const filteredVMs = useMemo(() => {
+    if (!vms || vms.length === 0) return [];
+    
     return vms.filter(vm => {
       // Search filter
-      const matchesSearch = searchTerm.toLowerCase() === '' || 
-        vm.vm_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchesSearch = !searchTerm || searchTerm.toLowerCase() === '' || 
+        (vm.vm_name && vm.vm_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (vm.ip && vm.ip.toLowerCase().includes(searchTerm.toLowerCase()));
 
       // Status filter
@@ -46,29 +53,46 @@ const VMList = ({
 
       // Guest OS filter
       const matchesGuestOS = guestOSFilter === 'all' || 
-        guestOSMap[vm.guest_id] === guestOSFilter;
+        (vm.guest_id && guestOSMap[vm.guest_id] === guestOSFilter);
 
       return matchesSearch && matchesStatus && matchesGuestOS;
     });
-  }, [vms, searchTerm, statusFilter, guestOSFilter]);
+  }, [vms, searchTerm, statusFilter, guestOSFilter, guestOSMap]);
 
   // Paginated data
   const paginatedVMs = useMemo(() => {
+    if (!filteredVMs || filteredVMs.length === 0) return [];
+    
     const startIndex = (currentPage - 1) * pageSize;
     return filteredVMs.slice(startIndex, startIndex + pageSize);
   }, [filteredVMs, currentPage, pageSize]);
 
   // Calculate total pages
-  const totalPages = Math.ceil(filteredVMs.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(filteredVMs.length / pageSize));
+  
+  // Ensure current page is valid
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(Math.max(1, totalPages));
+    }
+  }, [currentPage, totalPages]);
 
   // Handle page changes
   const handlePageChange = (page) => {
-    setCurrentPage(page);
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      // Scroll to top of the table when changing pages
+      const tableElement = document.querySelector('.vm-table-container');
+      if (tableElement) {
+        tableElement.scrollTop = 0;
+      }
+    }
   };
 
   // Handle page size changes
   const handlePageSizeChange = (e) => {
-    setPageSize(Number(e.target.value));
+    const newPageSize = Number(e.target.value);
+    setPageSize(newPageSize);
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
@@ -77,6 +101,7 @@ const VMList = ({
     setSearchTerm('');
     setStatusFilter('all');
     setGuestOSFilter('all');
+    setCurrentPage(1);
   };
 
   return (
@@ -197,108 +222,110 @@ const VMList = ({
       </div>
 
       {/* VM Table */}
-      {loading ? (
-        <div className="p-8 text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700 mx-auto mb-4"></div>
-          <p className="text-gray-600">Đang tải dữ liệu...</p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left border-separate border-spacing-0">
-            <thead className="bg-gray-100 text-gray-700 uppercase">
-              <tr>
-                <th className="sticky top-0 px-3 py-3 border-b text-center w-12">#</th>
-                <th className="sticky top-0 px-4 py-3 border-b">Tên VM</th>
-                <th className="sticky top-0 px-4 py-3 border-b text-center w-16">CPU</th>
-                <th className="sticky top-0 px-4 py-3 border-b text-center w-24">RAM (MB)</th>
-                <th className="sticky top-0 px-4 py-3 border-b text-center w-24">Disk (GB)</th>
-                <th className="sticky top-0 px-4 py-3 border-b">IP</th>
-                <th className="sticky top-0 px-4 py-3 border-b">Guest OS</th>
-                <th className="sticky top-0 px-4 py-3 border-b text-center w-24">Trạng thái</th>
-                <th className="sticky top-0 px-4 py-3 border-b text-center w-24">Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedVMs.length > 0 ? (
-                paginatedVMs.map((vm, index) => (
-                  <tr key={vm.vm_name} className="bg-white even:bg-gray-50 hover:bg-blue-50 transition-colors duration-150">
-                    <td className="px-3 py-3.5 border-b text-center text-gray-500 font-mono">
-                      {(currentPage - 1) * pageSize + index + 1}
-                    </td>
-                    <td className="px-4 py-3.5 border-b font-medium text-blue-700">{vm.vm_name}</td>
-                    <td className="px-4 py-3.5 border-b text-center">{vm.num_cpus}</td>
-                    <td className="px-4 py-3.5 border-b text-center">{vm.memory_mb}</td>
-                    <td className="px-4 py-3.5 border-b text-center">{vm.disk_size_gb}</td>
-                    <td className="px-4 py-3.5 border-b font-mono">{vm.ip}</td>
-                    <td className="px-4 py-3.5 border-b">
-                      {guestOSMap[vm.guest_id] || 'Không xác định'}
-                    </td>
-                    <td className="px-4 py-3.5 border-b text-center">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        vm.status === 'running' 
-                        ? 'bg-green-100 text-green-800 border border-green-300' 
-                        : 'bg-gray-100 text-gray-700 border border-gray-300'
-                      }`}>
-                        {vm.status === 'running' ? 'Đang chạy' : 'Đã dừng'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3.5 border-b">
-                      <div className="flex items-center justify-center space-x-3">
-                        {vm.status === 'running' ? (
+      <div className="vm-table-container" style={{ maxHeight: 'calc(100vh - 300px)', overflowY: 'auto' }}>
+        {loading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700 mx-auto mb-4"></div>
+            <p className="text-gray-600">Đang tải dữ liệu...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left border-separate border-spacing-0">
+              <thead className="bg-gray-100 text-gray-700 uppercase sticky top-0 z-10">
+                <tr>
+                  <th className="px-3 py-3 border-b text-center w-12">#</th>
+                  <th className="px-4 py-3 border-b">Tên VM</th>
+                  <th className="px-4 py-3 border-b text-center w-16">CPU</th>
+                  <th className="px-4 py-3 border-b text-center w-24">RAM (MB)</th>
+                  <th className="px-4 py-3 border-b text-center w-24">Disk (GB)</th>
+                  <th className="px-4 py-3 border-b">IP</th>
+                  <th className="px-4 py-3 border-b">Guest OS</th>
+                  <th className="px-4 py-3 border-b text-center w-24">Trạng thái</th>
+                  <th className="px-4 py-3 border-b text-center w-24">Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedVMs.length > 0 ? (
+                  paginatedVMs.map((vm, index) => (
+                    <tr key={`${vm.vm_name}-${index}`} className="bg-white even:bg-gray-50 hover:bg-blue-50 transition-colors duration-150">
+                      <td className="px-3 py-3.5 border-b text-center text-gray-500 font-mono">
+                        {(currentPage - 1) * pageSize + index + 1}
+                      </td>
+                      <td className="px-4 py-3.5 border-b font-medium text-blue-700">{vm.vm_name}</td>
+                      <td className="px-4 py-3.5 border-b text-center">{vm.num_cpus}</td>
+                      <td className="px-4 py-3.5 border-b text-center">{vm.memory_mb}</td>
+                      <td className="px-4 py-3.5 border-b text-center">{vm.disk_size_gb}</td>
+                      <td className="px-4 py-3.5 border-b font-mono">{vm.ip}</td>
+                      <td className="px-4 py-3.5 border-b">
+                        {vm.guest_id && guestOSMap[vm.guest_id] ? guestOSMap[vm.guest_id] : 'Không xác định'}
+                      </td>
+                      <td className="px-4 py-3.5 border-b text-center">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          vm.status === 'running' 
+                          ? 'bg-green-100 text-green-800 border border-green-300' 
+                          : 'bg-gray-100 text-gray-700 border border-gray-300'
+                        }`}>
+                          {vm.status === 'running' ? 'Đang chạy' : 'Đã dừng'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 border-b">
+                        <div className="flex items-center justify-center space-x-3">
+                          {vm.status === 'running' ? (
+                            <button 
+                              onClick={() => onPowerAction(vm, 'stop')}
+                              className="text-amber-600 hover:text-amber-800 hover:bg-amber-50 p-1.5 rounded-full transition-colors"
+                              disabled={taskRunning || !vCenterConnected}
+                              title="Dừng VM"
+                            >
+                              <Square className="h-4 w-4" />
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => onPowerAction(vm, 'start')}
+                              className="text-green-600 hover:text-green-800 hover:bg-green-50 p-1.5 rounded-full transition-colors"
+                              disabled={taskRunning || !vCenterConnected}
+                              title="Khởi động VM"
+                            >
+                              <Play className="h-4 w-4" />
+                            </button>
+                          )}
                           <button 
-                            onClick={() => onPowerAction(vm, 'stop')}
-                            className="text-amber-600 hover:text-amber-800 hover:bg-amber-50 p-1.5 rounded-full transition-colors"
+                            onClick={() => onEditVM(vm)}
+                            className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded-full transition-colors"
                             disabled={taskRunning || !vCenterConnected}
-                            title="Dừng VM"
+                            title="Chỉnh sửa VM"
                           >
-                            <Square className="h-4 w-4" />
+                            <Edit className="h-4 w-4" />
                           </button>
-                        ) : (
                           <button 
-                            onClick={() => onPowerAction(vm, 'start')}
-                            className="text-green-600 hover:text-green-800 hover:bg-green-50 p-1.5 rounded-full transition-colors"
+                            onClick={() => onDeleteVM(vm)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1.5 rounded-full transition-colors"
                             disabled={taskRunning || !vCenterConnected}
-                            title="Khởi động VM"
+                            title="Xóa VM"
                           >
-                            <Play className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </button>
-                        )}
-                        <button 
-                          onClick={() => onEditVM(vm)}
-                          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1.5 rounded-full transition-colors"
-                          disabled={taskRunning || !vCenterConnected}
-                          title="Chỉnh sửa VM"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        <button 
-                          onClick={() => onDeleteVM(vm)}
-                          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1.5 rounded-full transition-colors"
-                          disabled={taskRunning || !vCenterConnected}
-                          title="Xóa VM"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                      {vCenterConnected ? 
+                        (filteredVMs.length === 0 && (searchTerm || statusFilter !== 'all' || guestOSFilter !== 'all') 
+                          ? 'Không tìm thấy máy ảo phù hợp với bộ lọc' 
+                          : 'Không có VM nào. Hãy thêm VM mới để bắt đầu.') : 
+                        'Vui lòng kết nối vCenter để xem danh sách VM.'
+                      }
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
-                    {vCenterConnected ? 
-                      (filteredVMs.length === 0 && (searchTerm || statusFilter !== 'all' || guestOSFilter !== 'all') 
-                        ? 'Không tìm thấy máy ảo phù hợp với bộ lọc' 
-                        : 'Không có VM nào. Hãy thêm VM mới để bắt đầu.') : 
-                      'Vui lòng kết nối vCenter để xem danh sách VM.'
-                    }
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      )}
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       {/* Pagination Controls */}
       {!loading && filteredVMs.length > 0 && (

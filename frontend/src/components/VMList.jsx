@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Settings } from 'lucide-react';
 import VMToolbar from './vm-list/VMToolbar';
 import VMFilters from './vm-list/VMFilters';
 import VMTable from './vm-list/VMTable';

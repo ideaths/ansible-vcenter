@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { XCircle, Server, RefreshCw } from 'lucide-react';
+import { XCircle, Server, RefreshCw, ServerOff } from 'lucide-react';
 
-const VCenterConfig = ({ config, onSubmit, onCancel, isLoading }) => {
+const VCenterConfig = ({ config, onSubmit, onCancel, isLoading, onDisconnect, isConnected }) => {
   const [formData, setFormData] = useState(config || {
     hostname: '',
     username: '',
@@ -38,7 +38,9 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading }) => {
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Cấu hình kết nối vCenter</h2>
+            <h2 className="text-xl font-semibold">
+              {isConnected ? 'Cấu hình kết nối vCenter hiện tại' : 'Cấu hình kết nối vCenter'}
+            </h2>
             <button 
               onClick={onCancel}
               className="text-gray-500 hover:text-gray-700"
@@ -91,9 +93,14 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading }) => {
                   onChange={handleChange}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
                   placeholder="Password"
-                  required
+                  required={!isConnected}
                   disabled={isLoading}
                 />
+                {isConnected && !formData.password && (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Để trống để giữ mật khẩu hiện tại
+                  </p>
+                )}
               </div>
               
               {/* Datacenter */}
@@ -129,6 +136,17 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading }) => {
             </div>
             
             <div className="mt-6 flex justify-end space-x-3">
+              {isConnected && (
+                <button
+                  type="button"
+                  onClick={onDisconnect}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 flex items-center"
+                  disabled={isLoading}
+                >
+                  <ServerOff className="h-4 w-4 mr-2" />
+                  Ngắt kết nối
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onCancel}
@@ -150,7 +168,7 @@ const VCenterConfig = ({ config, onSubmit, onCancel, isLoading }) => {
                 ) : (
                   <>
                     <Server className="h-4 w-4 mr-2" />
-                    Kết nối
+                    {isConnected ? 'Cập nhật kết nối' : 'Kết nối'}
                   </>
                 )}
               </button>

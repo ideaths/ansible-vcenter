@@ -217,11 +217,67 @@ router.post('/vms/:vmName/power', async (req, res) => {
       });
     }
     
-    // TODO: Thêm code để thực hiện thay đổi trạng thái nguồn VM
-    // Hiện tại chỉ trả về response giả
+    // Chuyển đổi action thành trạng thái nguồn cho Ansible
+    // start -> powered-on, stop -> powered-off
+    const powerState = action === 'start' ? 'powered-on' : 'powered-off';
+    
+    // Lấy cấu hình vCenter hiện tại
+    const vcenterConfig = await vCenterConfig.getVCenterConfig();
+    
+    // Thiết lập các biến cần thiết cho Ansible
+    const playbook = path.join(__dirname, '../ansible/vm_power_control.yml');
+    const extraVars = {
+      vcenter_hostname: vcenterConfig.hostname,
+      vcenter_username: vcenterConfig.username,
+      vcenter_password: vcenterConfig.password,
+      vcenter_validate_certs: vcenterConfig.validateCerts,
+      datacenter_name: vcenterConfig.datacenter,
+      vm_name: vmName,
+      power_state: powerState
+    };
+    
+    // Command để chạy Ansible playbook
+    const command = 'ansible-playbook';
+    const args = [
+      playbook,
+      '-e', JSON.stringify(extraVars)
+    ];
+    
+    console.log(`Running power ${action} on VM ${vmName}`);
+    
+    // Chạy Ansible command
+    const ansibleProcess = spawn(command, args);
+    
+    let output = '';
+    let errorOutput = '';
+    
+    ansibleProcess.stdout.on('data', (data) => {
+      const chunk = data.toString();
+      output += chunk;
+      console.log('Ansible output:', chunk);
+    });
+    
+    ansibleProcess.stderr.on('data', (data) => {
+      const chunk = data.toString();
+      errorOutput += chunk;
+      console.error('Ansible error:', chunk);
+    });
+    
+    // Trả về kết quả sau khi playbook hoàn thành
+    ansibleProcess.on('close', (code) => {
+      if (code === 0) {
+        console.log(`Successfully ${action} VM ${vmName}`);
+      } else {
+        console.error(`Failed to ${action} VM ${vmName}:`, errorOutput);
+      }
+    });
+    
+    // Gửi phản hồi ngay lập tức mà không đợi playbook hoàn thành
+    // Thực tế có thể cải tiến bằng cách sử dụng WebSocket để gửi kết quả realtime
     res.json({
       success: true,
-      message: `VM ${vmName} đã được ${action === 'start' ? 'khởi động' : 'dừng'} thành công`
+      message: `VM ${vmName} đang được ${action === 'start' ? 'khởi động' : 'dừng'}`,
+      status: 'processing'
     });
   } catch (error) {
     console.error('Lỗi khi thay đổi trạng thái nguồn VM:', error);

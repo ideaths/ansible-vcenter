@@ -4,7 +4,7 @@ import VMForm from './components/VMForm';
 import VCenterConfig from './components/VCenterConfig';
 import LogViewer from './components/LogViewer';
 import apiService from './services/api';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ServerOff } from 'lucide-react';
 
 function App() {
   // State
@@ -63,6 +63,13 @@ function App() {
         setVCenterConnected(true);
         setShowVCenterConfig(false);
         
+        // Lưu trạng thái kết nối vào localStorage
+        localStorage.setItem('vCenterConnection', JSON.stringify({
+          config, 
+          connected: true,
+          timestamp: Date.now()
+        }));
+        
         setMessage({
           text: `Đã kết nối thành công đến vCenter: ${config.hostname}`,
           type: 'success'
@@ -78,6 +85,9 @@ function App() {
     } catch (error) {
       setVCenterConnected(false);
       
+      // Xóa thông tin kết nối khỏi localStorage nếu kết nối thất bại
+      localStorage.removeItem('vCenterConnection');
+      
       setMessage({
         text: `Không thể kết nối đến vCenter: ${error.error || error.message}`,
         type: 'error'
@@ -87,6 +97,18 @@ function App() {
     } finally {
       setTaskRunning(false);
     }
+  };
+
+  // Ngắt kết nối vCenter
+  const disconnectVCenter = () => {
+    setVCenterConnected(false);
+    localStorage.removeItem('vCenterConnection');
+    setShowVCenterConfig(false);
+    setMessage({
+      text: 'Đã ngắt kết nối khỏi vCenter',
+      type: 'info'
+    });
+    setTaskLog(prev => [...prev, `Đã ngắt kết nối khỏi vCenter: ${vCenterConfig.hostname}`]);
   };
 
   // Xử lý thêm VM mới
@@ -234,11 +256,32 @@ function App() {
     }
   }, [message]);
 
-  // Khởi tạo
+  // Khôi phục trạng thái kết nối
   useEffect(() => {
     setShowLogs(true);
-    if (vCenterConfig.hostname && vCenterConfig.username) {
-      setTaskLog([`Chào mừng đến với Quản lý VM. Vui lòng kết nối vCenter để bắt đầu.`]);
+    setTaskLog([`Chào mừng đến với Quản lý VM. Đang khôi phục trạng thái kết nối...`]);
+    
+    // Kiểm tra xem đã có thông tin kết nối được lưu trữ trước đó chưa
+    const savedConnection = localStorage.getItem('vCenterConnection');
+    if (savedConnection) {
+      try {
+        const connectionData = JSON.parse(savedConnection);
+        setVCenterConfig(connectionData.config);
+        setVCenterConnected(connectionData.connected);
+        
+        if (connectionData.connected) {
+          // Nếu đã từng kết nối thành công, tự động lấy danh sách VM
+          setTaskLog(prev => [...prev, `Đã khôi phục kết nối tới vCenter: ${connectionData.config.hostname}`]);
+          fetchVMs();
+        } else {
+          setTaskLog(prev => [...prev, `Vui lòng kết nối vCenter để bắt đầu.`]);
+        }
+      } catch (error) {
+        console.error('Lỗi khi khôi phục trạng thái kết nối:', error);
+        setTaskLog(prev => [...prev, `Lỗi khi khôi phục trạng thái kết nối: ${error.message}`]);
+      }
+    } else {
+      setTaskLog(prev => [...prev, `Vui lòng kết nối vCenter để bắt đầu.`]);
     }
   }, []);
 
@@ -256,10 +299,13 @@ function App() {
         {/* Message Alert */}
         {message.text && (
           <div className={`mb-4 p-3 rounded-md flex items-center ${
-            message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            message.type === 'error' ? 'bg-red-100 text-red-700' : 
+            message.type === 'info' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
           }`}>
             {message.type === 'error' ? (
               <AlertCircle className="mr-2 h-5 w-5" />
+            ) : message.type === 'info' ? (
+              <div className="mr-2 h-5 w-5 text-blue-500">ℹ</div>
             ) : (
               <div className="mr-2 h-5 w-5 text-green-500">✓</div>
             )}
@@ -347,7 +393,9 @@ function App() {
           config={vCenterConfig} 
           onSubmit={connectToVCenter} 
           onCancel={() => setShowVCenterConfig(false)} 
-          isLoading={taskRunning} 
+          isLoading={taskRunning}
+          onDisconnect={disconnectVCenter}
+          isConnected={vCenterConnected}
         />
       )}
     </div>

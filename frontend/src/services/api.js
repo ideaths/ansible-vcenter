@@ -1,5 +1,7 @@
 // frontend/src/services/api.js
 import axios from 'axios';
+import { store } from '../store/store';
+import { startLoading, stopLoading } from '../store/loadingSlice';
 
 // Base URL của API
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -47,9 +49,12 @@ const apiService = {
    */
   getVMs: async () => {
     try {
+      store.dispatch(startLoading('Đang lấy danh sách VM...'));
       const response = await apiClient.get('/vms');
+      store.dispatch(stopLoading());
       return response.data;
     } catch (error) {
+      store.dispatch(stopLoading());
       console.error('Lỗi khi lấy danh sách VM:', error);
       throw error;
     }
@@ -62,9 +67,12 @@ const apiService = {
    */
   createOrUpdateVM: async (vm) => {
     try {
+      store.dispatch(startLoading('Đang thêm/cập nhật VM...'));
       const response = await apiClient.post('/vms', vm);
+      store.dispatch(stopLoading());
       return response.data;
     } catch (error) {
+      store.dispatch(stopLoading());
       console.error('Lỗi khi thêm/cập nhật VM:', error);
       throw error;
     }
@@ -77,9 +85,12 @@ const apiService = {
    */
   deleteVM: async (vmName) => {
     try {
+      store.dispatch(startLoading('Đang xóa VM...'));
       const response = await apiClient.delete(`/vms/${vmName}`);
+      store.dispatch(stopLoading());
       return response.data;
     } catch (error) {
+      store.dispatch(stopLoading());
       console.error('Lỗi khi xóa VM:', error);
       throw error;
     }
@@ -92,9 +103,12 @@ const apiService = {
    */
   connectToVCenter: async (config) => {
     try {
+      store.dispatch(startLoading('Đang kết nối tới vCenter...'));
       const response = await apiClient.post('/vcenter/connect', config);
+      store.dispatch(stopLoading());
       return response.data;
     } catch (error) {
+      store.dispatch(stopLoading());
       console.error('Lỗi kết nối vCenter:', error);
       throw error;
     }
@@ -108,9 +122,12 @@ const apiService = {
    */
   powerActionVM: async (vmName, action) => {
     try {
+      store.dispatch(startLoading('Đang thay đổi trạng thái VM...'));
       const response = await apiClient.post(`/vms/${vmName}/power`, { action });
+      store.dispatch(stopLoading());
       return response.data;
     } catch (error) {
+      store.dispatch(stopLoading());
       console.error('Lỗi thay đổi trạng thái VM:', error);
       throw error;
     }
@@ -122,12 +139,25 @@ const apiService = {
    */
   runAnsible: async () => {
     try {
+      store.dispatch(startLoading('Đang chạy Ansible...'));
       const response = await apiClient.post('/ansible/run');
+      store.dispatch(stopLoading());
       return response.data;
     } catch (error) {
+      store.dispatch(stopLoading());
       console.error('Lỗi khi chạy Ansible:', error);
       throw error;
     }
+  }
+};
+
+export const executeAnsiblePlaybook = async (playbookName, params) => {
+  try {
+    store.dispatch(startLoading('Đang thực thi Ansible playbook...'));
+    // ...existing code...
+  } catch (error) {
+    store.dispatch(stopLoading());
+    throw error;
   }
 };
 

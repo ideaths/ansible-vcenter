@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Backend service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vm-management-backend
+    restart: unless-stopped
+    privileged: true  # Cấp quyền cao cho container để Ansible hoạt động tốt hơn
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - ./backend/data:/app/data
+      - ./backend/ansible:/etc/ansible/playbooks
+      - ansible-cache:/root/.ansible
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - ANSIBLE_HOST_KEY_CHECKING=False
+      - PYTHONUNBUFFERED=1
+    networks:
+      - vm-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Cho phép container kết nối với host
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vm-management-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - vm-network
+
+networks:
+  vm-network:
+    driver: bridge
+
+volumes:
+  ansible-cache:  # Volume lưu trữ cache của Ansible

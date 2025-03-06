@@ -1,0 +1,418 @@
+import React, { useState, useEffect } from 'react';
+import VMList from './components/VMList';
+import VMForm from './components/VMForm';
+import VCenterConfig from './components/VCenterConfig';
+import LogViewer from './components/LogViewer';
+import apiService from './services/api';
+import { AlertCircle } from 'lucide-react';
+
+function App() {
+  // State
+  const [vms, setVms] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [currentVm, setCurrentVm] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [message, setMessage] = useState({ text: '', type: '' });
+  const [taskRunning, setTaskRunning] = useState(false);
+  const [taskLog, setTaskLog] = useState([]);
+  const [showLogs, setShowLogs] = useState(false);
+  const [showVCenterConfig, setShowVCenterConfig] = useState(false);
+  const [vCenterConfig, setVCenterConfig] = useState({
+    hostname: "vcenter.example.com",
+    username: "administrator@vsphere.local",
+    password: "",
+    validateCerts: false,
+    datacenter: "Home"
+  });
+  const [vCenterConnected, setVCenterConnected] = useState(false);
+
+  // Template cho VM mới
+  const emptyVm = {
+    action: 'apply',
+    vm_name: '',
+    num_cpus: 2,
+    memory_mb: 4096,
+    disk_size_gb: 50,
+    ip: '',
+    template: 'template-redhat8',
+    guest_id: 'rhel8_64Guest',
+    network: 'VM Network',
+    datastore: 'datastore1',
+    folder: '/',
+    hostname: '',
+    netmask: '255.255.255.0',
+    gateway: '192.168.1.1'
+  };
+
+  // Lấy danh sách VM
+  const fetchVMs = async () => {
+    setLoading(true);
+    setTaskLog(prev => [...prev, `Đang lấy danh sách VM từ server...`]);
+    
+    try {
+      // Trong môi trường thực tế, sử dụng API call
+      // const data = await apiService.getVMs();
+      
+      // Dữ liệu mẫu cho phát triển
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = [
+        {
+          action: 'apply',
+          vm_name: 'web-server01',
+          num_cpus: 4,
+          memory_mb: 8192,
+          disk_size_gb: 100,
+          ip: '192.168.1.15',
+          template: 'template-redhat8',
+          guest_id: 'rhel8_64Guest',
+          network: 'VM Network',
+          datastore: 'datastore1',
+          folder: '/',
+          status: 'running'
+        },
+        {
+          action: 'apply',
+          vm_name: 'db-server01',
+          num_cpus: 8,
+          memory_mb: 16384,
+          disk_size_gb: 500,
+          ip: '192.168.1.16',
+          template: 'template-redhat8',
+          guest_id: 'rhel8_64Guest',
+          network: 'VM Network',
+          datastore: 'datastore1',
+          folder: '/',
+          status: 'stopped'
+        }
+      ];
+      
+      setVms(data);
+      setTaskLog(prev => [...prev, `Đã lấy ${data.length} VM từ server`]);
+    } catch (error) {
+      setMessage({
+        text: 'Lỗi khi tải danh sách VM: ' + error.message,
+        type: 'error'
+      });
+      setTaskLog(prev => [...prev, `Lỗi khi lấy danh sách VM: ${error.message}`]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Kiểm tra kết nối vCenter
+  const connectToVCenter = async (config) => {
+    setTaskRunning(true);
+    setTaskLog(prev => [...prev, `Đang kết nối đến vCenter: ${config.hostname}...`]);
+    
+    try {
+      // Trong môi trường thực tế sử dụng API call
+      // const result = await apiService.connectToVCenter(config);
+      
+      // Mô phỏng kết nối
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setVCenterConfig(config);
+      setVCenterConnected(true);
+      setShowVCenterConfig(false);
+      
+      setMessage({
+        text: `Đã kết nối thành công đến vCenter: ${config.hostname}`,
+        type: 'success'
+      });
+      
+      setTaskLog(prev => [...prev, `Kết nối đến vCenter thành công!`]);
+      
+      // Lấy danh sách VM sau khi kết nối
+      fetchVMs();
+    } catch (error) {
+      setVCenterConnected(false);
+      
+      setMessage({
+        text: `Không thể kết nối đến vCenter: ${error.message}`,
+        type: 'error'
+      });
+      
+      setTaskLog(prev => [...prev, `Kết nối đến vCenter thất bại: ${error.message}`]);
+    } finally {
+      setTaskRunning(false);
+    }
+  };
+
+  // Xử lý thêm VM mới
+  const handleAddVM = () => {
+    setCurrentVm({...emptyVm});
+    setShowForm(true);
+  };
+
+  // Xử lý chỉnh sửa VM
+  const handleEditVM = (vm) => {
+    setCurrentVm({...vm});
+    setShowForm(true);
+  };
+
+  // Xử lý xác nhận xóa VM
+  const handleDeleteConfirm = (vm) => {
+    setCurrentVm(vm);
+    setShowDeleteConfirm(true);
+  };
+
+  // Xử lý khi submit form
+  const handleSubmitVM = async (vm) => {
+    if (!vCenterConnected) {
+      setMessage({
+        text: 'Vui lòng kết nối vCenter trước khi thực hiện thao tác này',
+        type: 'error'
+      });
+      return;
+    }
+    
+    setTaskRunning(true);
+    setShowLogs(true);
+    setTaskLog(prev => [...prev, `Chuẩn bị chạy Ansible playbook cho VM: ${vm.vm_name}`]);
+    
+    try {
+      // Trong môi trường thực tế gọi API
+      // const result = await apiService.createOrUpdateVM(vm);
+      
+      // Mô phỏng xử lý
+      setTaskLog(prev => [...prev, `Cập nhật file CSV: vms.csv với cấu hình VM`]);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setTaskLog(prev => [...prev, `Kết nối đến vCenter ${vCenterConfig.hostname} với tài khoản ${vCenterConfig.username}`]);
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      setTaskLog(prev => [...prev, `Chạy Ansible playbook: manage_vcenter_vms.yml với biến vcenter_hostname=${vCenterConfig.hostname}, datacenter=${vCenterConfig.datacenter}`]);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      setTaskLog(prev => [...prev, `Quá trình thực thi Ansible hoàn tất thành công!`]);
+      
+      // Cập nhật danh sách VM
+      if (vms.find(v => v.vm_name === vm.vm_name)) {
+        // Cập nhật VM hiện có
+        setVms(vms.map(v => v.vm_name === vm.vm_name ? {...vm, status: 'running'} : v));
+      } else {
+        // Thêm VM mới
+        setVms([...vms, {...vm, status: 'running'}]);
+      }
+      
+      setMessage({
+        text: `VM ${vm.vm_name} đã được ${vms.find(v => v.vm_name === vm.vm_name) ? 'cập nhật' : 'thêm'} thành công!`,
+        type: 'success'
+      });
+      
+      setShowForm(false);
+    } catch (error) {
+      setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
+      setMessage({
+        text: `Lỗi khi thao tác VM: ${error.message}`,
+        type: 'error'
+      });
+    } finally {
+      setTaskRunning(false);
+    }
+  };
+
+  // Xử lý khi xóa VM
+  const handleDeleteVM = async () => {
+    if (!currentVm) return;
+    
+    setTaskRunning(true);
+    setShowLogs(true);
+    setTaskLog(prev => [...prev, `Chuẩn bị xóa VM: ${currentVm.vm_name}`]);
+    
+    try {
+      // Trong môi trường thực tế gọi API
+      // const result = await apiService.deleteVM(currentVm.vm_name);
+      
+      // Mô phỏng xử lý
+      setTaskLog(prev => [...prev, `Cập nhật file CSV: đánh dấu VM ${currentVm.vm_name} với action=destroy`]);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      setTaskLog(prev => [...prev, `Kết nối đến vCenter ${vCenterConfig.hostname} với tài khoản ${vCenterConfig.username}`]);
+      await new Promise(resolve => setTimeout(resolve, 1200));
+      
+      setTaskLog(prev => [...prev, `Chạy Ansible playbook: manage_vcenter_vms.yml để xóa VM`]);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      
+      setTaskLog(prev => [...prev, `VM đã được xóa thành công trên vCenter`]);
+      
+      // Xóa VM khỏi danh sách
+      setVms(vms.filter(vm => vm.vm_name !== currentVm.vm_name));
+      
+      setMessage({
+        text: `VM ${currentVm.vm_name} đã được xóa thành công!`,
+        type: 'success'
+      });
+      
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
+      setMessage({
+        text: `Lỗi khi xóa VM: ${error.message}`,
+        type: 'error'
+      });
+    } finally {
+      setTaskRunning(false);
+    }
+  };
+
+  // Mô phỏng thay đổi trạng thái nguồn VM (start/stop)
+  const handlePowerAction = async (vm, action) => {
+    setTaskRunning(true);
+    setShowLogs(true);
+    setTaskLog([`Thực hiện thay đổi trạng thái nguồn: ${action} cho VM: ${vm.vm_name}`]);
+    
+    try {
+      // Mô phỏng xử lý
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setTaskLog(prev => [...prev, `Trạng thái nguồn đã thay đổi thành công!`]);
+      
+      // Cập nhật trạng thái VM
+      setVms(vms.map(v => 
+        v.vm_name === vm.vm_name ? {...v, status: action === 'start' ? 'running' : 'stopped'} : v
+      ));
+    } catch (error) {
+      setTaskLog(prev => [...prev, `Lỗi: ${error.message}`]);
+      setMessage({
+        text: `Lỗi khi thay đổi trạng thái nguồn: ${error.message}`,
+        type: 'error'
+      });
+    } finally {
+      setTaskRunning(false);
+    }
+  };
+
+  // Hiển thị thông báo với auto-dismiss
+  useEffect(() => {
+    if (message.text) {
+      const timer = setTimeout(() => {
+        setMessage({ text: '', type: '' });
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+
+  // Khởi tạo
+  useEffect(() => {
+    setShowLogs(true);
+    if (vCenterConfig.hostname && vCenterConfig.username) {
+      setTaskLog([`Chào mừng đến với Quản lý VM. Vui lòng kết nối vCenter để bắt đầu.`]);
+    }
+  }, []);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-100">
+      {/* Header */}
+      <header className="bg-blue-700 text-white p-4 shadow-md">
+        <div className="container mx-auto">
+          <h1 className="text-2xl font-bold">Quản lý VM với Ansible</h1>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-grow container mx-auto p-4">
+        {/* Message Alert */}
+        {message.text && (
+          <div className={`mb-4 p-3 rounded-md flex items-center ${
+            message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+          }`}>
+            {message.type === 'error' ? (
+              <AlertCircle className="mr-2 h-5 w-5" />
+            ) : (
+              <div className="mr-2 h-5 w-5 text-green-500">✓</div>
+            )}
+            <span>{message.text}</span>
+          </div>
+        )}
+
+        {/* Main App Content */}
+        <div className="space-y-4">
+          {/* VM List with Controls */}
+          <VMList 
+            vms={vms} 
+            loading={loading}
+            vCenterConfig={vCenterConfig}
+            vCenterConnected={vCenterConnected}
+            showLogs={showLogs}
+            setShowLogs={setShowLogs}
+            onAddVM={handleAddVM}
+            onEditVM={handleEditVM}
+            onDeleteVM={handleDeleteConfirm}
+            onPowerAction={handlePowerAction}
+            onConfigVCenter={() => setShowVCenterConfig(true)}
+            taskRunning={taskRunning}
+          />
+          
+          {/* Log Viewer */}
+          {showLogs && (
+            <LogViewer 
+              logs={taskLog} 
+              isLoading={taskRunning} 
+              onClose={() => setShowLogs(false)} 
+            />
+          )}
+        </div>
+      </main>
+
+      {/* Modals */}
+      {showForm && (
+        <VMForm 
+          vm={currentVm} 
+          onSubmit={handleSubmitVM} 
+          onCancel={() => setShowForm(false)} 
+          isLoading={taskRunning} 
+        />
+      )}
+      
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="p-6">
+              <div className="text-center">
+                <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Xác nhận xóa VM</h3>
+                <p className="text-sm text-gray-500">
+                  Bạn có chắc chắn muốn xóa VM <span className="font-semibold">{currentVm?.vm_name}</span>? 
+                  Hành động này không thể hoàn tác.
+                </p>
+              </div>
+              
+              <div className="mt-6 flex justify-center space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                  disabled={taskRunning}
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteVM}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  disabled={taskRunning}
+                >
+                  Xóa VM
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {showVCenterConfig && (
+        <VCenterConfig 
+          config={vCenterConfig} 
+          onSubmit={connectToVCenter} 
+          onCancel={() => setShowVCenterConfig(false)} 
+          isLoading={taskRunning} 
+        />
+      )}
+    </div>
+  );
+}
+
+export default App;

@@ -3,19 +3,6 @@ import React from 'react';
 const VMAdvancedFields = ({ formData, onChange, isLoading }) => {
   return (
     <>
-      {/* Số nhân CPU */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Số nhân CPU</label>
-        <input
-          type="number"
-          name="num_cpu_cores"
-          value={formData.num_cpu_cores || 1}
-          onChange={onChange}
-          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-          min="1"
-          disabled={isLoading}
-        />
-      </div>
 
       {/* SCSI Type */}
       <div>

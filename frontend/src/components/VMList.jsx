@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Settings, RefreshCw } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 import VMToolbar from './vm-list/VMToolbar';
 import VMFilters from './vm-list/VMFilters';
 import VMTable from './vm-list/VMTable';
@@ -20,7 +20,7 @@ const VMList = ({
   onConfigVCenter,
   onRunAnsible,
   taskRunning,
-  onRefresh // Add this new prop
+  onRefresh
 }) => {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,6 +42,11 @@ const VMList = ({
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter, guestOSFilter]);
+
+  // Add auto-refresh on mount
+  useEffect(() => {
+    onRefresh();
+  }, [onRefresh]);
 
   // Filtered VMs
   const filteredVMs = useMemo(() => {
@@ -108,12 +113,12 @@ const VMList = ({
       </p>
       {vCenterConnected ? (
         <button
-          onClick={onRefresh} // Change this line
+          onClick={onAddVM}
           className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
           disabled={taskRunning}
         >
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Tải danh sách VM
+          <Plus className="h-4 w-4 mr-2" />
+          Thêm VM mới
         </button>
       ) : (
         <button

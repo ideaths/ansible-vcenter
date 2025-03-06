@@ -93,7 +93,7 @@ const VMTable = ({
   );
 };
 
-const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction, onAddVM }) => (
+const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction }) => (
   <div className={styles.actions}>
     {vm.status === VM_STATUS.RUNNING ? (
       <>
@@ -125,10 +125,13 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
           <Play className="h-4 w-4" />
         </button>
         <button 
-          onClick={onAddVM}
+          onClick={() => {
+            // Update the VM with action: 'apply' 
+            onDeleteVM({...vm, action: 'apply'});
+          }}
           className={btnStyles.iconBtnPrimary}
           disabled={taskRunning || !vCenterConnected}
-          title="Tạo VM mới"
+          title="Khôi phục VM"
         >
           <Plus className="h-4 w-4" />
         </button>

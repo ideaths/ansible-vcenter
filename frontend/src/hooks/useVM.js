@@ -31,11 +31,12 @@ export const useVM = (onMessage, onLog, onRefreshVMs) => {
     }
   };
 
-  const handleDeleteVM = async () => {
+  const handleDeleteVM = async (vm) => {
     if (!currentVm) return;
     
     try {
-      const result = await apiService.deleteVM(currentVm.vm_name);
+      const vmToDelete = { ...vm, action: 'destroy' };
+      const result = await apiService.deleteVM(vmToDelete.vm_name);
       
       if (result.success) {
         onLog(`VM đã được đánh dấu xóa thành công - sử dụng nút "Chạy Ansible" để thực hiện thao tác`);

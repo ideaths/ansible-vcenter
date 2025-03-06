@@ -108,6 +108,16 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
         >
           <Square className="h-4 w-4" />
         </button>
+        {vm.action === 'apply' && (
+          <button 
+            onClick={() => onDeleteVM(vm)}
+            className={btnStyles.iconBtnDanger}
+            disabled={taskRunning || !vCenterConnected}
+            title="Xóa VM"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
       </>
     ) : (
       <>
@@ -122,37 +132,21 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
         >
           <Play className="h-4 w-4" />
         </button>
+        {vm.action === 'destroy' && (
+          <button 
+            onClick={() => {
+              const updatedVM = { ...vm, action: 'apply' };
+              onAddVM(updatedVM);
+            }}
+            className={btnStyles.iconBtnPrimary}
+            disabled={taskRunning || !vCenterConnected}
+            title="Tạo VM mới"
+          >
+            <Plus className="h-4 w-4" />
+          </button>
+        )}
       </>
     )}
-
-    {/* Luôn hiển thị nút Delete khi action là 'apply' */}
-    {vm.action === 'apply' && (
-      <button 
-        onClick={() => onDeleteVM(vm)}
-        className={btnStyles.iconBtnDanger}
-        disabled={taskRunning || !vCenterConnected}
-        title="Xóa VM"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
-    )}
-
-    {/* Hiển thị nút Plus khi action là 'destroy' */}
-    {vm.action === 'destroy' && (
-      <button 
-        onClick={() => {
-          // Update VM with action: 'apply' first
-          const updatedVM = { ...vm, action: 'apply' };
-          onAddVM(updatedVM);
-        }}
-        className={btnStyles.iconBtnPrimary}
-        disabled={taskRunning || !vCenterConnected}
-        title="Tạo VM mới"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
-    )}
-
     <button 
       onClick={() => onEditVM(vm)}
       className={btnStyles.iconBtnEdit}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { NETWORK_DEVICES } from '../../constants/networkConstants';
 
 const VMNetworkFields = ({ formData, onChange, isLoading }) => {
   return (
@@ -72,6 +73,50 @@ const VMNetworkFields = ({ formData, onChange, isLoading }) => {
           <option value="static">Tĩnh (Static)</option>
           <option value="dhcp">Động (DHCP)</option>
         </select>
+      </div>
+
+      {/* Network Device */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Network Device</label>
+        <select
+          name="network_device"
+          value={formData.network_device || 'vmxnet3'}
+          onChange={onChange}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          disabled={isLoading}
+        >
+          {Object.entries(NETWORK_DEVICES).map(([key, value]) => (
+            <option key={key} value={value}>{value}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* DNS Server */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">DNS Server</label>
+        <input
+          type="text"
+          name="dns_servers"
+          value={formData.dns_servers || '191.168.1.53'}
+          onChange={onChange}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          placeholder="191.168.1.53"
+          disabled={isLoading}
+        />
+      </div>
+
+      {/* Domain */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Domain</label>
+        <input
+          type="text"
+          name="domain"
+          value={formData.domain || 'idevops.io.vn'}
+          onChange={onChange}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          placeholder="idevops.io.vn"
+          disabled={isLoading}
+        />
       </div>
     </>
   );

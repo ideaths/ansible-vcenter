@@ -67,6 +67,20 @@ const VMBasicFields = ({ formData, onChange, isLoading }) => {
         />
       </div>
 
+      {/* Số nhân CPU - Moved here */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700">Số nhân CPU</label>
+        <input
+          type="number"
+          name="num_cpu_cores"
+          value={formData.num_cpu_cores || 1}
+          onChange={onChange}
+          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+          min="1"
+          disabled={isLoading}
+        />
+      </div>
+
       {/* RAM */}
       <div>
         <label className="block text-sm font-medium text-gray-700">RAM (MB)</label>

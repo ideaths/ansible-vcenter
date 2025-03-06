@@ -95,10 +95,13 @@ const VMTable = ({
 
 const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction, onAddVM }) => (
   <div className={styles.actions}>
-    {vm.status === VM_STATUS.RUNNING ? (
+    {vm.status === 'on' ? (
       <>
         <button 
-          onClick={() => onPowerAction(vm, 'stop')}
+          onClick={() => {
+            const updatedVM = { ...vm, action: 'poweroff', status: 'off' };
+            onPowerAction(updatedVM, 'stop');
+          }}
           className={btnStyles.iconBtnWarning}
           disabled={taskRunning || !vCenterConnected}
           title="Dừng VM"
@@ -117,7 +120,10 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
     ) : (
       <>
         <button 
-          onClick={() => onPowerAction(vm, 'start')}
+          onClick={() => {
+            const updatedVM = { ...vm, action: 'poweron', status: 'on' };
+            onPowerAction(updatedVM, 'start');
+          }}
           className={btnStyles.iconBtnSuccess}
           disabled={taskRunning || !vCenterConnected}
           title="Khởi động VM"

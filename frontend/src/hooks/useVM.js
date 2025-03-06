@@ -60,16 +60,31 @@ export const useVM = (onMessage, onLog, onRefreshVMs) => {
 
   const handlePowerAction = async (vm, action) => {
     try {
-      onLog(`Power action ${action} đã được đăng ký cho VM: ${vm.vm_name}`);
-      onMessage({
-        text: `${action === 'start' ? 'Khởi động' : 'Dừng'} VM ${vm.vm_name} đã được đăng ký. Nhấn "Chạy Ansible" để thực hiện.`,
-        type: 'info'
-      });
-      return true;
+      const result = await apiService.powerActionVM(vm.vm_name, action);
+      
+      if (result.success) {
+        onLog(`Power action ${action} đã được đăng ký cho VM: ${vm.vm_name}`);
+        onMessage({
+          text: `${action === 'start' ? 'Khởi động' : 'Dừng'} VM ${vm.vm_name} đã được đăng ký. Đang thực hiện...`,
+          type: 'info'
+        });
+
+        // Run Ansible immediately for power actions
+        const ansibleResult = await apiService.runAnsible();
+        if (ansibleResult.success) {
+          onRefreshVMs();
+          onMessage({
+            text: `${action === 'start' ? 'Khởi động' : 'Dừng'} VM ${vm.vm_name} thành công`,
+            type: 'success'
+          });
+        }
+        return true;
+      }
+      throw new Error(result.message || 'Có lỗi xảy ra');
     } catch (error) {
       onLog(`Lỗi: ${error.error || error.message}`);
       onMessage({
-        text: `Lỗi khi đăng ký thay đổi trạng thái nguồn: ${error.error || error.message}`,
+        text: `Lỗi khi thay đổi trạng thái nguồn: ${error.error || error.message}`,
         type: 'error'
       });
       return false;

@@ -17,6 +17,7 @@ const DEFAULT_CSV_HEADERS = [
 // Giá trị mặc định cho các trường
 const DEFAULT_VM_VALUES = {
   action: 'apply',
+  status: 'off',  // Add default status
   num_cpus: 2,
   memory_mb: 4096,
   disk_size_gb: 50,

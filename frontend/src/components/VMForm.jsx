@@ -31,6 +31,9 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
     }
 
     const cleanedData = { ...formData };
+    // Giữ nguyên action từ VM gốc nếu đang edit, hoặc dùng giá trị mặc định nếu tạo mới
+    cleanedData.action = vm?.action || DEFAULT_VM.action;
+    
     Object.keys(cleanedData).forEach(key => {
       if (cleanedData[key] === '' || cleanedData[key] === null || 
           (typeof cleanedData[key] === 'string' && cleanedData[key].trim() === '')) {

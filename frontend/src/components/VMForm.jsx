@@ -109,9 +109,9 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
           </div>
           
           <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {/* Tên VM */}
-              <div>
+              <div className="md:col-span-2 lg:col-span-1">
                 <label className="block text-sm font-medium text-gray-700">Tên VM *</label>
                 <input
                   type="text"
@@ -122,6 +122,22 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
                   required
                   disabled={isLoading}
                   placeholder="Nhập tên máy ảo"
+                />
+              </div>
+              
+              {/* IP */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">IP</label>
+                <input
+                  type="text"
+                  name="ip"
+                  value={formData.ip || ''}
+                  onChange={handleChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                  placeholder="192.168.1.10"
+                  required
+                  disabled={isLoading}
+                  pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
                 />
               </div>
               
@@ -168,22 +184,6 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
                   required
                   min="10"
                   disabled={isLoading}
-                />
-              </div>
-              
-              {/* IP */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700">IP</label>
-                <input
-                  type="text"
-                  name="ip"
-                  value={formData.ip || ''}
-                  onChange={handleChange}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                  placeholder="192.168.1.10"
-                  required
-                  disabled={isLoading}
-                  pattern="^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
                 />
               </div>
               
@@ -409,7 +409,7 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
               </div>
 
               {/* Wait for IP Checkbox */}
-              <div className="flex items-center md:col-span-2">
+              <div className="flex items-center col-span-full">
                 <input
                   type="checkbox"
                   id="wait_for_ip"

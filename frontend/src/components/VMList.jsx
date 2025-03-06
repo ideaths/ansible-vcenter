@@ -240,7 +240,7 @@ const VMList = ({
                   <th className="px-4 py-3 border-b text-center w-24">Disk (GB)</th>
                   <th className="px-4 py-3 border-b">IP</th>
                   <th className="px-4 py-3 border-b">Guest OS</th>
-                  <th className="px-4 py-3 border-b text-center w-24">Trạng thái</th>
+                  <th className="px-4 py-3 border-b text-center w-32">Trạng thái</th>
                   <th className="px-4 py-3 border-b text-center w-24">Hành động</th>
                 </tr>
               </thead>
@@ -259,7 +259,7 @@ const VMList = ({
                       <td className="px-4 py-3.5 border-b">
                         {vm.guest_id && guestOSMap[vm.guest_id] ? guestOSMap[vm.guest_id] : 'Không xác định'}
                       </td>
-                      <td className="px-4 py-3.5 border-b text-center">
+                      <td className="px-4 py-3.5 border-b text-center min-w-[120px]">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           vm.status === 'running' 
                           ? 'bg-green-100 text-green-800 border border-green-300' 

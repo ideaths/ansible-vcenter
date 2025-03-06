@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Settings } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import VMToolbar from './vm-list/VMToolbar';
 import VMFilters from './vm-list/VMFilters';
 import VMTable from './vm-list/VMTable';
@@ -17,7 +17,6 @@ const VMList = ({
   onEditVM, 
   onDeleteVM, 
   onPowerAction, 
-  onConfigVCenter,
   onRunAnsible,
   taskRunning,
   onRefresh
@@ -122,16 +121,7 @@ const VMList = ({
           <Plus className="h-4 w-4 mr-2" />
           Thêm VM mới
         </button>
-      ) : (
-        <button
-          onClick={onConfigVCenter}
-          className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-          disabled={taskRunning}
-        >
-          <Settings className="h-4 w-4 mr-2" />
-          Cấu hình vCenter
-        </button>
-      )}
+      ) : null}
     </div>
   );
 
@@ -143,7 +133,6 @@ const VMList = ({
         showLogs={showLogs}
         setShowLogs={setShowLogs}
         onAddVM={onAddVM}
-        onConfigVCenter={onConfigVCenter}
         onRunAnsible={onRunAnsible}
         taskRunning={taskRunning}
       />

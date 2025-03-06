@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Play, Settings, Server, ServerOff } from 'lucide-react';
+import { Plus, Play, Server, ServerOff } from 'lucide-react';
 
 const VMToolbar = ({
   vCenterConfig,
@@ -7,7 +7,6 @@ const VMToolbar = ({
   showLogs,
   setShowLogs,
   onAddVM,
-  onConfigVCenter,
   onRunAnsible,
   taskRunning
 }) => {
@@ -32,15 +31,6 @@ const VMToolbar = ({
       </div>
 
       <div className="flex gap-3">
-        <button
-          onClick={onConfigVCenter}
-          className="flex items-center px-4 py-2.5 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 border shadow-sm transition-colors"
-          disabled={taskRunning}
-        >
-          <Settings className="mr-2 h-4 w-4" />
-          Cấu hình vCenter
-        </button>
-
         <button
           onClick={() => setShowLogs(!showLogs)}
           className={`px-4 py-2.5 rounded-md shadow-sm border transition-colors ${

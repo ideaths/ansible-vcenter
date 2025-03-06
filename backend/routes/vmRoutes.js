@@ -151,30 +151,49 @@ router.delete('/vms/:vmName', async (req, res) => {
   }
 });
 
-// Đăng ký thay đổi trạng thái nguồn VM (start/stop) - không chạy Ansible
+// Endpoint to handle VM power actions (start/stop)
 router.post('/vms/:vmName/power', async (req, res) => {
   try {
     const { vmName } = req.params;
     const { action } = req.body;
-    
+
     if (!['start', 'stop'].includes(action)) {
       return res.status(400).json({ 
         success: false, 
         error: 'Action không hợp lệ. Chỉ hỗ trợ start hoặc stop.' 
       });
     }
-    
-    // Chỉ lưu trạng thái mà không thực hiện action
+
+    // Get vCenter configuration
+    const vcenterConfig = await vCenterConfig.getVCenterConfig();
+
+    // Set up variables for Ansible playbook
+    const playbook = path.join(__dirname, '../ansible/vm_power_control.yml');
+    const extraVars = {
+      vcenter_hostname: vcenterConfig.hostname,
+      vcenter_username: vcenterConfig.username,
+      vcenter_password: vcenterConfig.password,
+      vcenter_validate_certs: vcenterConfig.validateCerts,
+      datacenter_name: vcenterConfig.datacenter,
+      vm_name: vmName,
+      power_state: action === 'start' ? 'poweredon' : 'poweredoff'
+    };
+
+    console.log(`Executing Ansible playbook to ${action} VM: ${vmName}`);
+
+    // Run Ansible playbook
+    const result = await runAnsiblePlaybook(playbook, extraVars);
+
     res.json({
       success: true,
-      message: `VM ${vmName} đã được đăng ký thay đổi trạng thái nguồn: ${action}`,
-      status: 'pending'
+      message: `VM ${vmName} đã được ${action === 'start' ? 'khởi động' : 'dừng'} thành công`,
+      details: result
     });
   } catch (error) {
-    console.error('Lỗi khi đăng ký thay đổi trạng thái nguồn VM:', error);
+    console.error(`Lỗi khi ${action} VM:`, error);
     res.status(500).json({ 
       success: false, 
-      error: error.message || 'Lỗi không xác định khi đăng ký thay đổi trạng thái VM' 
+      error: error.message || `Lỗi không xác định khi ${action} VM` 
     });
   }
 });

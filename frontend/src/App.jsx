@@ -13,6 +13,7 @@ import apiService from './services/api';
 import { AlertCircle } from 'lucide-react';
 import MessageAlert from './components/MessageAlert';
 import DeleteConfirmDialog from './components/DeleteConfirmDialog';
+import Toast from './components/Toast';
 
 function App() {
   const dispatch = useDispatch();
@@ -98,6 +99,10 @@ function App() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <LoadingOverlay />
+      <Toast 
+        message={message} 
+        onClose={() => setMessage({ text: '', type: '' })} 
+      />
       
       {/* Header */}
       <header className="bg-blue-700 text-white p-4 shadow-md">

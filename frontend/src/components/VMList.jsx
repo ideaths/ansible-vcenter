@@ -43,10 +43,12 @@ const VMList = ({
     setCurrentPage(1);
   }, [searchTerm, statusFilter, guestOSFilter]);
 
-  // Add auto-refresh on mount
+  // Chỉ gọi onRefresh một lần khi component mount
   useEffect(() => {
-    onRefresh();
-  }, [onRefresh]);
+    if (vCenterConnected) {
+      onRefresh();
+    }
+  }, [vCenterConnected]); // Chỉ gọi lại khi trạng thái kết nối thay đổi
 
   // Filtered VMs
   const filteredVMs = useMemo(() => {

@@ -113,9 +113,6 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto p-4">
-        <MessageAlert message={message} />
-
-        {/* Main App Content */}
         <div className="space-y-4">
           <VMList 
             vms={vms} 

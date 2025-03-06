@@ -15,7 +15,7 @@ const VMTable = ({
   onEditVM,
   onDeleteVM,
   onPowerAction,
-  onAddVM
+  onAddVM  // Add this prop
 }) => {
   if (loading) {
     return (
@@ -93,7 +93,7 @@ const VMTable = ({
   );
 };
 
-const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction }) => (
+const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction, onAddVM }) => (
   <div className={styles.actions}>
     {vm.status === VM_STATUS.RUNNING ? (
       <>
@@ -125,13 +125,10 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
           <Play className="h-4 w-4" />
         </button>
         <button 
-          onClick={() => {
-            // Update the VM with action: 'apply' 
-            onDeleteVM({...vm, action: 'apply'});
-          }}
+          onClick={onAddVM}  // Change this to onAddVM
           className={btnStyles.iconBtnPrimary}
           disabled={taskRunning || !vCenterConnected}
-          title="Khôi phục VM"
+          title="Tạo VM mới"  // Update tooltip
         >
           <Plus className="h-4 w-4" />
         </button>

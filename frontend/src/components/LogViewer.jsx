@@ -7,39 +7,39 @@ const LogViewer = ({ logs, isLoading, onClose }) => {
   const logEndRef = useRef(null);
   const logContainerRef = useRef(null);
   
-  // Auto-scroll to bottom when logs change, but only within the log container
   useEffect(() => {
     if (logEndRef.current && logContainerRef.current) {
-      // Use scrollTop instead of scrollIntoView to prevent page scrolling
       const container = logContainerRef.current;
       container.scrollTop = container.scrollHeight;
     }
   }, [logs]);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <h3 className={styles.title}>Logs</h3>
-        <button 
-          onClick={onClose}
-          className={btnStyles.iconBtn}
-          title="Đóng"
-        >
-          <XCircle className="h-5 w-5" />
-        </button>
-      </div>
-      
-      <div ref={logContainerRef} className={styles.logContainer}>
-        {logs.length > 0 ? (
-          logs.map((log, index) => (
-            <LogEntry key={index} log={log} />
-          ))
-        ) : (
-          <EmptyState />
-        )}
+    <div className={styles.overlay}>
+      <div className={styles.modal}>
+        <div className={styles.header}>
+          <h3 className={styles.title}>Logs</h3>
+          <button 
+            onClick={onClose}
+            className={btnStyles.iconBtn}
+            title="Đóng"
+          >
+            <XCircle className="h-5 w-5" />
+          </button>
+        </div>
         
-        {isLoading && <LoadingIndicator />}
-        <div ref={logEndRef} />
+        <div ref={logContainerRef} className={styles.logContainer}>
+          {logs.length > 0 ? (
+            logs.map((log, index) => (
+              <LogEntry key={index} log={log} />
+            ))
+          ) : (
+            <EmptyState />
+          )}
+          
+          {isLoading && <LoadingIndicator />}
+          <div ref={logEndRef} />
+        </div>
       </div>
     </div>
   );

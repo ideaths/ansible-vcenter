@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
+import { restoreLoadingState } from './store/loadingSlice';
 import VMList from './components/VMList';
 import VMForm from './components/VMForm';
 import VCenterConfig from './components/VCenterConfig';
@@ -359,6 +361,13 @@ function App() {
       setTaskLog(prev => [...prev, `Vui lòng kết nối vCenter để bắt đầu.`]);
     }
   }, []);
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    // Khôi phục loading state khi component mount
+    dispatch(restoreLoadingState());
+  }, [dispatch]);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">

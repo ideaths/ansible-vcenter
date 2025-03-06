@@ -3,7 +3,7 @@
 }
 
 .container {
-  @apply bg-white rounded-lg shadow-xl w-full max-w-2xl;
+  @apply max-w-lg mx-auto mt-20 bg-white rounded-lg shadow-xl p-8;
 }
 
 .content {
@@ -43,5 +43,5 @@
 }
 
 .footer {
-  @apply mt-6 flex justify-end space-x-3;
+  @apply mt-8 flex justify-center;
 }

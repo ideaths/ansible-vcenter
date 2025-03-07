@@ -132,12 +132,19 @@ const VMList = ({
       const updatedVM = { ...vm, action: 'apply' };
       const result = await apiService.createOrUpdateVM(updatedVM);
       if (result.success) {
+        onMessage({
+          text: `VM ${vm.vm_name} đã được khôi phục thành công!`,
+          type: 'success'
+        });
         onRefresh();
         return true;
       }
-      return false;
+      throw new Error(result.message || 'Có lỗi xảy ra khi khôi phục VM');
     } catch (error) {
-      console.error('Error restoring VM:', error);
+      onMessage({
+        text: `Lỗi khi khôi phục VM: ${error.error || error.message}`,
+        type: 'error'
+      });
       return false;
     }
   };

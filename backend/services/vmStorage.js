@@ -46,19 +46,19 @@ const DEFAULT_VM_VALUES = {
  */
 function normalizeVMData(vm) {
   // Tạo một bản sao của VM để không thay đổi đối tượng gốc
-  const normalizedVM = { ...DEFAULT_VM_VALUES, ...vm };
+  const normalizedVM = { ...DEFAULT_VM_VALUES };
+
+  // Chỉ copy các trường có giá trị từ VM input, giữ nguyên action
+  Object.keys(vm).forEach(key => {
+    if (vm[key] !== undefined && vm[key] !== '') {
+      normalizedVM[key] = vm[key];
+    }
+  });
 
   // Đảm bảo hostname giống với vm_name nếu không có
   if (!normalizedVM.hostname) {
     normalizedVM.hostname = normalizedVM.vm_name;
   }
-
-  // Loại bỏ các trường undefined hoặc rỗng
-  Object.keys(normalizedVM).forEach(key => {
-    if (normalizedVM[key] === undefined || normalizedVM[key] === '') {
-      delete normalizedVM[key];
-    }
-  });
 
   return normalizedVM;
 }

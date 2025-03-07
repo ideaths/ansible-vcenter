@@ -44,7 +44,7 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
       cleanedData.hostname = cleanedData.vm_name;
     }
     
-    onSubmit(cleanedData);
+    onSubmit(cleanedData); // Submit with original action value
   };
 
   return (

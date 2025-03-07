@@ -13,8 +13,6 @@ const runAnsiblePlaybook = async (playbook, extraVars) => {
     try {
       const command = 'ansible-playbook';
       const args = [
-        '--skip-tags',
-        'no_skip',  // Skip deprecation warnings
         playbook,
         '-e', JSON.stringify(extraVars)
       ];
@@ -28,7 +26,7 @@ const runAnsiblePlaybook = async (playbook, extraVars) => {
       
       ansibleProcess.stdout.on('data', (data) => {
         const chunk = data.toString();
-        // Filter out deprecation warnings
+        // Skip deprecation warnings in output
         if (!chunk.includes('DEPRECATION WARNING')) {
           output += chunk;
           console.log('Ansible output:', chunk);
@@ -37,7 +35,7 @@ const runAnsiblePlaybook = async (playbook, extraVars) => {
       
       ansibleProcess.stderr.on('data', (data) => {
         const chunk = data.toString();
-        // Filter out deprecation warnings
+        // Only collect real errors, not deprecation warnings
         if (!chunk.includes('DEPRECATION WARNING')) {
           errorOutput += chunk;
           console.error('Ansible error:', chunk);
@@ -45,13 +43,18 @@ const runAnsiblePlaybook = async (playbook, extraVars) => {
       });
       
       ansibleProcess.on('close', (code) => {
-        // Consider code 2 as success if there's no real error
+        // Accept both code 0 and code 2 as success if there are no real errors
         if (code === 0 || (code === 2 && !errorOutput.trim())) {
           console.log('Ansible playbook executed successfully');
-          resolve({ success: true, output });
+          resolve({
+            success: true,
+            output: output,
+            code: code
+          });
         } else {
-          console.error('Ansible playbook failed:', errorOutput);
-          reject(new Error(errorOutput || 'Ansible execution failed'));
+          console.error('Ansible playbook failed with code:', code);
+          const error = errorOutput.trim() || 'Unknown Ansible execution error';
+          reject(new Error(error));
         }
       });
     } catch (error) {

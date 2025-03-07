@@ -100,7 +100,7 @@ const VMActions = ({
   onEditVM, 
   onDeleteVM, 
   onPowerAction,
-  onRestoreVM  // Add this prop
+  onRestoreVM  // Đảm bảo prop được truyền xuống
 }) => (
   <div className={styles.actions}>
     {/* Power Actions */}
@@ -145,7 +145,7 @@ const VMActions = ({
     {/* Restore button - show when action is 'destroy' */}
     {vm.action === 'destroy' && (
       <button 
-        onClick={() => onRestoreVM(vm)}
+        onClick={() => onRestoreVM(vm)}  // Gọi trực tiếp hàm onRestoreVM
         className={btnStyles.iconBtnPrimary}
         disabled={taskRunning || !vCenterConnected}
         title="Khôi phục VM"

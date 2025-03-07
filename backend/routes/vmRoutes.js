@@ -117,7 +117,7 @@ router.post('/vms', async (req, res) => {
     
     res.json({
       success: true,
-      message: `VM ${vmData.vm_name} đã được ${req.body.vm_name ? 'cập nhật' : 'thêm'} thành công`,
+      message: `VM ${vmData.vm_name} đã được ${vmData.vm_name ? 'cập nhật' : 'thêm'} thành công`,
       vms: updatedVMs
     });
   } catch (error) {

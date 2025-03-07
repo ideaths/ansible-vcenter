@@ -16,13 +16,16 @@ import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import Toast from './components/Toast';
 import LoginPage from './pages/LoginPage';
 
+// Import des styles améliorés
+import './styles/enhanced-styles.css';
+
 function App() {
   const dispatch = useDispatch();
   const [vms, setVms] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [taskRunning, setTaskRunning] = useState(false);
-  const [taskPower, setTaskPower] = useState(false); // Thêm state mới cho taskPower
+  const [taskPower, setTaskPower] = useState(false);
   const [taskLog, setTaskLog] = useState([]);
   const [showLogs, setShowLogs] = useState(false);
   const [showVCenterConfig, setShowVCenterConfig] = useState(false);
@@ -34,10 +37,9 @@ function App() {
   const { vCenterConfig, vCenterConnected, connectToVCenter, disconnectVCenter } = 
     useVCenter(onMessage, onLog);
 
-  // Sửa lại useVM để truyền thêm setTaskPower
   const { currentVm, showForm, showDeleteConfirm, setCurrentVm, setShowForm, 
     setShowDeleteConfirm, handleSubmitVM, handleDeleteVM, handlePowerAction } = 
-    useVM(onMessage, onLog, fetchVMs, setTaskPower); // Truyền thêm setTaskPower
+    useVM(onMessage, onLog, fetchVMs, setTaskPower);
 
   const { ansibleRunning, runAnsible } = useAnsible(onMessage, onLog, fetchVMs);
 
@@ -132,13 +134,13 @@ function App() {
         onClose={() => setMessage({ text: '', type: '' })} 
       />
       
-      {/* Header */}
-      <header className="bg-blue-700 text-white p-4 shadow-md">
+      {/* Header with gradient */}
+      <header className="bg-gradient-to-r from-blue-700 to-blue-800 text-white p-4 shadow-md">
         <div className="container mx-auto flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Quản lý VM với Ansible</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Quản lý VM với Ansible</h1>
           <button
             onClick={disconnectVCenter}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-all hover:-translate-y-0.5 shadow"
           >
             Đăng xuất
           </button>
@@ -158,32 +160,32 @@ function App() {
             onAddVM={handleAddVM}
             onEditVM={handleEditVM}
             onDeleteVM={handleDeleteConfirm}
-            onPowerAction={handlePowerActionWithState} // Sử dụng hàm mới có quản lý state
+            onPowerAction={handlePowerActionWithState}
             onConfigVCenter={() => setShowVCenterConfig(true)}
             onRunAnsible={handleRunAnsible}
             taskRunning={taskRunning}
-            taskPower={taskPower} // Truyền xuống taskPower
+            taskPower={taskPower}
             onRefresh={fetchVMs}
             onMessage={onMessage}
             onLog={onLog}
           />
           
-          {/* Log Viewer */}
+          {/* Log Viewer with improved animation */}
           {showLogs && (
             <LogViewer 
               logs={taskLog} 
-              isLoading={taskRunning || taskPower} // Cập nhật để kiểm tra cả taskPower
+              isLoading={taskRunning || taskPower}
               onClose={() => setShowLogs(false)} 
             />
           )}
         </div>
       </main>
 
-      {/* Modals */}
+      {/* Modals with improved UI */}
       {showForm && (
         <VMForm 
           vm={currentVm} 
-          vms={vms} // Thêm vms vào đây
+          vms={vms}
           onSubmit={handleSubmitVM} 
           onCancel={() => setShowForm(false)} 
           isLoading={taskRunning} 

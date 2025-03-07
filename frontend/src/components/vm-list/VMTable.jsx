@@ -1,41 +1,8 @@
+// VMTable.jsx - Component bảng VM được cải tiến
 import React from 'react';
 import { Play, Square, Edit, Trash2, PowerOff, RotateCcw } from 'lucide-react'; 
-import styles from '../../styles/components/VMList/VMTable.module.css';
-import btnStyles from '../../styles/common/buttons.module.css';
 
-// Hàm xác định nội dung và lớp CSS cho trạng thái VM
-const getVMStatusDisplay = (vm) => {
-  // Trường hợp 1: Status = on và action = apply => trạng thái = Đang chạy
-  if (vm.status === 'on' && vm.action === 'apply') {
-    return {
-      text: 'Đang chạy',
-      className: styles.statusRunning
-    };
-  }
-  // Trường hợp 2: Status = off và action = apply => trạng thái = Đang dừng
-  else if (vm.status === 'off' && vm.action === 'apply') {
-    return {
-      text: 'Đang dừng',
-      className: styles.statusStopped
-    };
-  }
-  // Trường hợp 3: Status = off và action = destroy => trạng thái = Deleted
-  else if (vm.status === 'off' && vm.action === 'destroy') {
-    return {
-      text: 'Deleted',
-      className: styles.statusDeleted
-    };
-  }
-  // Trường hợp khác (không nên xảy ra, nhưng để an toàn)
-  else {
-    return {
-      text: 'Không xác định',
-      className: styles.statusUnknown
-    };
-  }
-};
-
-const VMTable = ({
+const EnhancedVMTable = ({
   vms,
   loading,
   currentPage,
@@ -51,75 +18,155 @@ const VMTable = ({
   onRestoreVM,
   onMessage
 }) => {
+  // Hàm xác định class cho trạng thái VM (giữ nguyên logic)
+  const getVMStatusDisplay = (vm) => {
+    if (vm.status === 'on' && vm.action === 'apply') {
+      return {
+        text: 'Đang chạy',
+        className: 'bg-green-100 text-green-800 border border-green-200'
+      };
+    } else if (vm.status === 'off' && vm.action === 'apply') {
+      return {
+        text: 'Đang dừng',
+        className: 'bg-gray-100 text-gray-700 border border-gray-200'
+      };
+    } else if (vm.action === 'destroy') {
+      return {
+        text: 'Deleted',
+        className: 'bg-red-100 text-red-800 border border-red-200'
+      };
+    }
+    return {
+      text: 'Không xác định',
+      className: 'bg-gray-100 text-gray-600 border border-gray-200'
+    };
+  };
+
   if (loading) {
     return (
-      <div className={styles.loadingState}>
-        <div className={styles.spinner}></div>
-        <p className={styles.loadingText}>Đang tải dữ liệu...</p>
+      <div className="p-8 text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700 mx-auto mb-4"></div>
+        <p className="text-gray-600">Đang tải dữ liệu...</p>
       </div>
     );
   }
 
   return (
-    <div className={styles.wrapper}>
-      <table className={styles.table}>
-        <thead className={styles.thead}>
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm text-left border-separate border-spacing-0">
+        <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
           <tr>
-            <th className="px-3 py-3 border-b text-center w-12">#</th>
-            <th className="px-4 py-3 border-b">Tên VM</th>
-            <th className="px-4 py-3 border-b text-center w-16">CPU</th>
-            <th className="px-4 py-3 border-b text-center w-24">RAM (MB)</th>
-            <th className="px-4 py-3 border-b text-center w-24">Disk (GB)</th>
-            <th className="px-4 py-3 border-b">IP</th>
-            <th className="px-4 py-3 border-b">Guest OS</th>
-            <th className="px-4 py-3 border-b text-center w-32">Trạng thái</th>
-            <th className="px-4 py-3 border-b text-center w-24">Hành động</th>
+            <th className="px-3 py-3 border-b text-center w-12 sticky top-0 z-10">#</th>
+            <th className="px-4 py-3 border-b sticky top-0 z-10">Tên VM</th>
+            <th className="px-4 py-3 border-b text-center w-16 sticky top-0 z-10">CPU</th>
+            <th className="px-4 py-3 border-b text-center w-24 sticky top-0 z-10">RAM (MB)</th>
+            <th className="px-4 py-3 border-b text-center w-24 sticky top-0 z-10">Disk (GB)</th>
+            <th className="px-4 py-3 border-b sticky top-0 z-10">IP</th>
+            <th className="px-4 py-3 border-b sticky top-0 z-10">Guest OS</th>
+            <th className="px-4 py-3 border-b text-center w-32 sticky top-0 z-10">Trạng thái</th>
+            <th className="px-4 py-3 border-b text-center w-24 sticky top-0 z-10">Hành động</th>
           </tr>
         </thead>
         <tbody>
           {vms.length > 0 ? (
-            vms.map((vm, index) => (
-              <tr key={`${vm.vm_name}-${index}`} className={styles.row}>
-                <td className="px-3 py-3.5 border-b text-center text-gray-500 font-mono">
-                  {(currentPage - 1) * pageSize + index + 1}
-                </td>
-                <td className="px-4 py-3.5 border-b font-medium text-blue-700">{vm.vm_name}</td>
-                <td className="px-4 py-3.5 border-b text-center">{vm.num_cpus}</td>
-                <td className="px-4 py-3.5 border-b text-center">{vm.memory_mb}</td>
-                <td className="px-4 py-3.5 border-b text-center">{vm.disk_size_gb}</td>
-                <td className="px-4 py-3.5 border-b font-mono">{vm.ip}</td>
-                <td className="px-4 py-3.5 border-b">
-                  {vm.guest_id && guestOSMap[vm.guest_id] ? guestOSMap[vm.guest_id] : 'Không xác định'}
-                </td>
-                <td className={styles.statusCell}>
-                  {(() => {
-                    const statusDisplay = getVMStatusDisplay(vm);
-                    return (
-                      <span className={`${styles.statusBadge} ${statusDisplay.className}`}>
-                        {statusDisplay.text}
-                      </span>
-                    );
-                  })()}
-                </td>
-                <td className={styles.actionsCell}>
-                  <VMActions 
-                    vm={vm}
-                    taskRunning={taskRunning}
-                    taskPower={taskPower}
-                    vCenterConnected={vCenterConnected}
-                    onEditVM={onEditVM}
-                    onDeleteVM={onDeleteVM}
-                    onPowerAction={onPowerAction}
-                    onAddVM={onAddVM}
-                    onRestoreVM={onRestoreVM}
-                    onMessage={onMessage}
-                  />
-                </td>
-              </tr>
-            ))
+            vms.map((vm, index) => {
+              const statusDisplay = getVMStatusDisplay(vm);
+              
+              return (
+                <tr key={`${vm.vm_name}-${index}`} className="transition-colors hover:bg-blue-50">
+                  <td className="px-3 py-3.5 border-b text-center text-gray-500 font-mono">
+                    {(currentPage - 1) * pageSize + index + 1}
+                  </td>
+                  <td className="px-4 py-3.5 border-b font-medium text-blue-700 hover:text-blue-800 cursor-pointer transition-colors">
+                    {vm.vm_name}
+                  </td>
+                  <td className="px-4 py-3.5 border-b text-center">{vm.num_cpus}</td>
+                  <td className="px-4 py-3.5 border-b text-center">{vm.memory_mb}</td>
+                  <td className="px-4 py-3.5 border-b text-center">{vm.disk_size_gb}</td>
+                  <td className="px-4 py-3.5 border-b font-mono">{vm.ip}</td>
+                  <td className="px-4 py-3.5 border-b">
+                    {vm.guest_id && guestOSMap[vm.guest_id] ? guestOSMap[vm.guest_id] : 'Không xác định'}
+                  </td>
+                  <td className="px-4 py-3.5 border-b text-center">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center ${statusDisplay.className}`}>
+                      {statusDisplay.text}
+                    </span>
+                    
+                    {/* Tags display */}
+                    {vm.tags && (
+                      <div className="mt-1.5 flex flex-wrap gap-1 justify-center">
+                        {vm.tags.split(',').filter(Boolean).map(tag => (
+                          <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-blue-50 text-blue-700 border border-blue-100 hover:bg-blue-100 transition-all">
+                            {tag.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 border-b">
+                    <div className="flex items-center justify-center space-x-1.5">
+                      {/* Power Actions */}
+                      {vm.status === 'on' ? (
+                        <button 
+                          onClick={() => onPowerAction(vm, 'stop')}
+                          className={`p-1.5 rounded-full transition-all hover:-translate-y-0.5 text-amber-600 hover:text-amber-800 hover:bg-amber-50 ${vm.action !== 'apply' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          disabled={taskPower || !vCenterConnected || vm.action !== 'apply'}
+                          title={vm.action !== 'apply' ? 'Không thể dừng VM có trạng thái "destroy"' : 'Dừng VM (Chạy Ansible ngay lập tức)'}
+                        >
+                          <Square className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => onPowerAction(vm, 'start')}
+                          className={`p-1.5 rounded-full transition-all hover:-translate-y-0.5 text-green-600 hover:text-green-800 hover:bg-green-50 ${vm.action !== 'apply' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          disabled={taskPower || !vCenterConnected || vm.action !== 'apply'}
+                          title={vm.action !== 'apply' ? 'Không thể khởi động VM có trạng thái "destroy"' : 'Khởi động VM (Chạy Ansible ngay lập tức)'}
+                        >
+                          <Play className="h-4 w-4" />
+                        </button>
+                      )}
+
+                      {/* Delete button - show when action is 'apply' */}
+                      {vm.action === 'apply' && (
+                        <button 
+                          onClick={() => onDeleteVM(vm)}
+                          className="p-1.5 rounded-full transition-all hover:-translate-y-0.5 text-red-600 hover:text-red-800 hover:bg-red-50"
+                          disabled={taskRunning || !vCenterConnected}
+                          title="Xóa VM"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+
+                      {/* Restore button - show when action is 'destroy' */}
+                      {vm.action === 'destroy' && (
+                        <button 
+                          onClick={() => onRestoreVM(vm)}
+                          className="p-1.5 rounded-full transition-all hover:-translate-y-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                          disabled={taskRunning || !vCenterConnected}
+                          title="Khôi phục VM"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </button>
+                      )}
+
+                      {/* Edit button - always show */}
+                      <button 
+                        onClick={() => onEditVM(vm)}
+                        className="p-1.5 rounded-full transition-all hover:-translate-y-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        disabled={taskRunning || !vCenterConnected}
+                        title="Chỉnh sửa VM"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })
           ) : (
             <tr>
-              <td colSpan="9" className={styles.emptyState}>
+              <td colSpan="9" className="px-4 py-6 text-center text-gray-500">
                 {vCenterConnected ? 
                   'Không có VM nào. Hãy thêm VM mới để bắt đầu.' : 
                   'Vui lòng kết nối vCenter để xem danh sách VM.'
@@ -132,94 +179,3 @@ const VMTable = ({
     </div>
   );
 };
-
-const VMActions = ({ 
-  vm, 
-  taskRunning, 
-  taskPower, 
-  vCenterConnected, 
-  onEditVM, 
-  onDeleteVM, 
-  onPowerAction,
-  onRestoreVM,
-  onMessage
-}) => {
-  // Hàm xử lý nút power khi bấm
-  const handlePowerAction = (vm, action) => {
-    // Kiểm tra VM có action là 'apply' hay không
-    if (vm.action !== 'apply') {
-      // Hiển thị thông báo lỗi
-      onMessage({
-        text: `Không thể ${action === 'start' ? 'khởi động' : 'dừng'} VM: ${vm.vm_name} vì VM đang có trạng thái "destroy"`,
-        type: 'error'
-      });
-      return;
-    }
-    
-    // Nếu VM có action là 'apply', tiến hành thực hiện hành động nguồn
-    if (window.confirm(`Bạn có chắc muốn ${action === 'start' ? 'khởi động' : 'dừng'} VM ${vm.vm_name}? Ansible sẽ được thực thi ngay lập tức.`)) {
-      onPowerAction(vm, action);
-    }
-  };
-
-  return (
-    <div className={styles.actions}>
-      {/* Power Actions - dựa vào status (on/off) từ CSV */}
-      {vm.status === 'on' ? (
-        <button 
-          onClick={() => handlePowerAction(vm, 'stop')}
-          className={`${btnStyles.iconBtnWarning} ${vm.action !== 'apply' ? 'opacity-50 cursor-not-allowed' : ''}`}
-          disabled={taskPower || !vCenterConnected || vm.action !== 'apply'}
-          title={vm.action !== 'apply' ? 'Không thể dừng VM có trạng thái "destroy"' : 'Dừng VM (Chạy Ansible ngay lập tức)'}
-        >
-          <Square className="h-4 w-4" />
-        </button>
-      ) : (
-        <button 
-          onClick={() => handlePowerAction(vm, 'start')}
-          className={`${btnStyles.iconBtnSuccess} ${vm.action !== 'apply' ? 'opacity-50 cursor-not-allowed' : ''}`}
-          disabled={taskPower || !vCenterConnected || vm.action !== 'apply'}
-          title={vm.action !== 'apply' ? 'Không thể khởi động VM có trạng thái "destroy"' : 'Khởi động VM (Chạy Ansible ngay lập tức)'}
-        >
-          <Play className="h-4 w-4" />
-        </button>
-      )}
-
-      {/* Delete button - show when action is 'apply' */}
-      {vm.action === 'apply' && (
-        <button 
-          onClick={() => onDeleteVM(vm)}
-          className={btnStyles.iconBtnDanger}
-          disabled={taskRunning || !vCenterConnected}
-          title="Xóa VM"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      )}
-
-      {/* Restore button - show when action is 'destroy' */}
-      {vm.action === 'destroy' && (
-        <button 
-          onClick={() => onRestoreVM(vm)}
-          className={btnStyles.iconBtnPrimary}
-          disabled={taskRunning || !vCenterConnected}
-          title="Khôi phục VM"
-        >
-          <RotateCcw className="h-4 w-4" />
-        </button>
-      )}
-
-      {/* Edit button - always show */}
-      <button 
-        onClick={() => onEditVM(vm)}
-        className={btnStyles.iconBtnEdit}
-        disabled={taskRunning || !vCenterConnected}
-        title="Chỉnh sửa VM"
-      >
-        <Edit className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
-
-export default VMTable;

@@ -21,7 +21,8 @@ const VMList = ({
   onRunAnsible,
   taskRunning,
   onRefresh,
-  onMessage // Thêm prop onMessage
+  onMessage, // Thêm prop onMessage
+  onLog, // Thêm prop onLog
 }) => {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
@@ -130,22 +131,28 @@ const VMList = ({
   // Handle restoring VM (change from destroy to apply)
   const handleRestoreVM = async (vm) => {
     try {
+      onLog(`Đang khôi phục VM ${vm.vm_name}...`);
+      
       const updatedVM = { ...vm, action: 'apply' };
       const result = await apiService.createOrUpdateVM(updatedVM);
+      
       if (result.success) {
         onMessage({
           text: `VM ${vm.vm_name} đã được khôi phục thành công!`,
           type: 'success'
         });
+        onLog(`VM ${vm.vm_name} đã được khôi phục thành công`);
         onRefresh();
         return true;
       }
       throw new Error(result.message || 'Có lỗi xảy ra khi khôi phục VM');
     } catch (error) {
+      const errorMsg = error.error || error.message;
       onMessage({
-        text: `Lỗi khi khôi phục VM: ${error.error || error.message}`,
+        text: `Lỗi khi khôi phục VM: ${errorMsg}`,
         type: 'error'
       });
+      onLog(`Lỗi khi khôi phục VM ${vm.vm_name}: ${errorMsg}`);
       return false;
     }
   };

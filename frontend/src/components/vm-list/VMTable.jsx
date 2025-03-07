@@ -15,7 +15,8 @@ const VMTable = ({
   onEditVM,
   onDeleteVM,
   onPowerAction,
-  onAddVM  // Add this prop
+  onAddVM,  // Add this prop
+  onRestoreVM,  // Thêm prop này
 }) => {
   if (loading) {
     return (
@@ -73,6 +74,7 @@ const VMTable = ({
                     onDeleteVM={onDeleteVM}
                     onPowerAction={onPowerAction}
                     onAddVM={onAddVM}
+                    onRestoreVM={onRestoreVM}
                   />
                 </td>
               </tr>

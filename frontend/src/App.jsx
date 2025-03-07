@@ -148,6 +148,7 @@ function App() {
             taskRunning={taskRunning}
             onRefresh={fetchVMs} // Add this line
             onMessage={onMessage} // Thêm prop onMessage
+            onLog={onLog} // Thêm prop onLog
           />
           
           {/* Log Viewer */}

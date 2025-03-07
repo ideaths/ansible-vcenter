@@ -28,7 +28,7 @@ const VMList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [guestOSFilter, setGuestOSFilter] = useState('all');
-  const [tagFilter, setTagFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState([]); // Thay đổi từ 'all' thành mảng rỗng
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -82,8 +82,10 @@ const VMList = ({
       const matchesGuestOS = guestOSFilter === 'all' || 
         (vm.guest_id && guestOSMap[vm.guest_id] === guestOSFilter);
 
-      const matchesTag = tagFilter === 'all' || 
-        (vm.tags && vm.tags.split(',').map(t => t.trim()).includes(tagFilter));
+      const matchesTag = tagFilter.length === 0 || 
+        (vm.tags && tagFilter.every(tag => 
+          vm.tags.split(',').map(t => t.trim()).includes(tag)
+        ));
 
       return matchesSearch && matchesStatus && matchesGuestOS && matchesTag;
     });
@@ -119,7 +121,7 @@ const VMList = ({
     setSearchTerm('');
     setStatusFilter('all');
     setGuestOSFilter('all');
-    setTagFilter('all');
+    setTagFilter([]); // Reset về mảng rỗng
     setCurrentPage(1);
   };
 

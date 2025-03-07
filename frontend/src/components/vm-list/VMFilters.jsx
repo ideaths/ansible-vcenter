@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, Filter, Plus } from 'lucide-react';
 import styles from '../../styles/components/VMList/VMFilters.module.css';
 import { VM_STATUS } from '../../constants/vmConstants';
 
@@ -10,9 +10,9 @@ const VMFilters = ({
   setStatusFilter,
   guestOSFilter,
   setGuestOSFilter,
-  tagFilter,   // Add this
-  setTagFilter, // Add this
-  availableTags, // Add this
+  tagFilter,
+  setTagFilter,
+  availableTags,
   guestOSMap,
   resetFilters
 }) => {
@@ -67,18 +67,40 @@ const VMFilters = ({
         </select>
       </div>
 
-      {/* Tag Filter */}
+      {/* Multi-select Tag Filter */}
       <div className={styles.filterWrapper}>
-        <select 
-          value={tagFilter}
-          onChange={(e) => setTagFilter(e.target.value)}
-          className={styles.select}
-        >
-          <option value="all">Tất cả tags</option>
-          {availableTags.map(tag => (
-            <option key={tag} value={tag}>{tag}</option>
-          ))}
-        </select>
+        <div className={styles.multiSelect}>
+          <div className={styles.selectedTags}>
+            {tagFilter.map(tag => (
+              <span key={tag} className={styles.tagBadge}>
+                {tag}
+                <button
+                  onClick={() => setTagFilter(prev => prev.filter(t => t !== tag))}
+                  className={styles.tagRemove}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <select
+            value=""
+            onChange={(e) => {
+              if (e.target.value && !tagFilter.includes(e.target.value)) {
+                setTagFilter(prev => [...prev, e.target.value]);
+              }
+            }}
+            className={styles.select}
+          >
+            <option value="">Thêm tag...</option>
+            {availableTags
+              .filter(tag => !tagFilter.includes(tag))
+              .map(tag => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))
+            }
+          </select>
+        </div>
       </div>
 
       {/* Reset Filters Button */}

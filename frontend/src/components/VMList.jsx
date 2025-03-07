@@ -168,6 +168,7 @@ const VMList = ({
             onEditVM={onEditVM}
             onDeleteVM={onDeleteVM}
             onPowerAction={onPowerAction}
+            onAddVM={onAddVM} // Thêm prop onAddVM vào đây
           />
         )}
       </div>

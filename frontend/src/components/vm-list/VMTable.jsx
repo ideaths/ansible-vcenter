@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Square, Edit, Trash2, PowerOff, Plus } from 'lucide-react';
+import { Play, Square, Edit, Trash2, PowerOff, RotateCcw } from 'lucide-react'; // Thay Plus bằng RotateCcw
 import styles from '../../styles/components/VMList/VMTable.module.css';
 import btnStyles from '../../styles/common/buttons.module.css';
 import { VM_STATUS } from '../../constants/vmConstants';
@@ -137,15 +137,12 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
     {/* Add button - show when action is 'destroy' */}
     {vm.action === 'destroy' && (
       <button 
-        onClick={() => {
-          const updatedVM = { ...vm, action: 'apply' };
-          onAddVM(updatedVM);
-        }}
+        onClick={() => onAddVM && onAddVM(vm)} // Thêm check onAddVM và truyền vm
         className={btnStyles.iconBtnPrimary}
         disabled={taskRunning || !vCenterConnected}
-        title="Tạo VM mới"
+        title="Khôi phục VM"
       >
-        <Plus className="h-4 w-4" />
+        <RotateCcw className="h-4 w-4" />
       </button>
     )}
 

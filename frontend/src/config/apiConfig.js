@@ -12,5 +12,5 @@ export const VCENTER_DEFAULT_CONFIG = {
   username: "administrator@vsphere.local",
   password: "",
   validateCerts: false,
-  datacenter: "Home"
+  datacenter: "Datacenter"
 };

@@ -147,6 +147,7 @@ function App() {
             onRunAnsible={handleRunAnsible}
             taskRunning={taskRunning}
             onRefresh={fetchVMs} // Add this line
+            onMessage={onMessage} // Thêm prop onMessage
           />
           
           {/* Log Viewer */}

@@ -20,7 +20,8 @@ const VMList = ({
   onPowerAction, 
   onRunAnsible,
   taskRunning,
-  onRefresh
+  onRefresh,
+  onMessage // Thêm prop onMessage
 }) => {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');

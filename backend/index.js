@@ -72,8 +72,8 @@ app.get('/api', (req, res) => {
 });
 
 // Sử dụng API routes
-app.use('/api', vmRoutes);
-app.use('/api', vCenterRoutes);
+app.use('/api', vmRoutes); 
+app.use('/api', vCenterRoutes); // Mount chung với prefix /api
 
 // 404 handler cho các route không tồn tại
 app.use((req, res, next) => {

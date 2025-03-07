@@ -83,6 +83,9 @@ const DEFAULT_CONFIG = {
  * @returns {Promise<string>} Đường dẫn đến file tạm
  */
 const createTempPythonScript = async (config) => {
+  // Create base64 auth string outside of template literal
+  const authString = Buffer.from(`${config.username}:${config.password}`).toString('base64');
+  
   const scriptContent = `
 import ssl
 import requests
@@ -96,7 +99,7 @@ def check_vcenter_connection():
     url = "https://${config.hostname}/rest/com/vmware/cis/session"
     headers = {
         "vmware-use-header-authn": "true",
-        "Authorization": "Basic ${Buffer.from(\`\${config.username}:\${config.password}\`).toString('base64')}"
+        "Authorization": "Basic ${authString}"
     }
     try:
         response = requests.post(url, headers=headers, verify=${config.validateCerts ? 'True' : 'False'})

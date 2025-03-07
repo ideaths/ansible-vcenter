@@ -4,8 +4,8 @@ const vCenterConfig = require('../config/vcenter');
 
 const router = express.Router();
 
-// Kiểm tra kết nối vCenter
-router.post('/connect', async (req, res) => {
+// Sửa route path để khớp với frontend
+router.post('/vcenter/connect', async (req, res) => {
   try {
     const config = req.body;
     
@@ -39,6 +39,23 @@ router.post('/connect', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error.message || 'Lỗi không xác định khi kết nối vCenter'
+    });
+  }
+});
+
+// Thêm route để lấy config
+router.get('/vcenter/config', async (req, res) => {
+  try {
+    const config = await vCenterConfig.getVCenterConfig();
+    res.json({
+      success: true,
+      config
+    });
+  } catch (error) {
+    console.error('Lỗi khi lấy cấu hình vCenter:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Lỗi không xác định khi lấy cấu hình vCenter'
     });
   }
 });

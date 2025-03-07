@@ -80,12 +80,17 @@ const DEFAULT_CONFIG = {
 /**
  * Tạo file Python tạm thời để kiểm tra kết nối vCenter
  * @param {Object} config Cấu hình vCenter
- * @returns {string} Đường dẫn đến file tạm
+ * @returns {Promise<string>} Đường dẫn đến file tạm
  */
-const createTempPythonScript = (config) => {
+const createTempPythonScript = async (config) => {
   const scriptContent = `
 import ssl
 import requests
+import warnings
+from urllib3.exceptions import InsecureRequestWarning
+
+# Disable InsecureRequestWarning
+warnings.filterwarnings('ignore', category=InsecureRequestWarning)
 
 def check_vcenter_connection():
     url = "https://${config.hostname}/rest/com/vmware/cis/session"
@@ -94,7 +99,7 @@ def check_vcenter_connection():
         "Authorization": "Basic ${Buffer.from(`${config.username}:${config.password}`).toString('base64')}"
     }
     try:
-        response = requests.post(url, headers=headers, verify=${config.validateCerts})
+        response = requests.post(url, headers=headers, verify=${config.validateCerts ? 'True' : 'False'})
         if response.status_code == 200:
             return True
         else:
@@ -114,7 +119,7 @@ if __name__ == "__main__":
 `;
 
   const tempFilePath = path.join(__dirname, '../data/temp_vcenter_check.py');
-  fs.writeFileSync(tempFilePath, scriptContent);
+  await fs.writeFile(tempFilePath, scriptContent); // Thay thế writeFileSync bằng writeFile
   return tempFilePath;
 };
 
@@ -124,7 +129,7 @@ if __name__ == "__main__":
  * @returns {Promise<Object>} Kết quả kiểm tra
  */
 const checkVCenterConnection = async (config) => {
-  const tempScriptPath = createTempPythonScript(config);
+  const tempScriptPath = await createTempPythonScript(config); // Thêm await vì createTempPythonScript giờ là async
 
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', [tempScriptPath]);
@@ -143,8 +148,12 @@ const checkVCenterConnection = async (config) => {
       reject(new Error(data.toString()));
     });
 
-    pythonProcess.on('close', (code) => {
-      fs.unlinkSync(tempScriptPath); // Xóa file tạm sau khi hoàn thành
+    pythonProcess.on('close', async (code) => {
+      try {
+        await fs.unlink(tempScriptPath); // Thay thế unlinkSync bằng unlink
+      } catch (error) {
+        console.error('Error deleting temp file:', error);
+      }
       if (code !== 0) {
         reject(new Error(`Python script exited with code ${code}`));
       }

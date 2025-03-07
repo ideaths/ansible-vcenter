@@ -16,8 +16,8 @@ import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import Toast from './components/Toast';
 import LoginPage from './pages/LoginPage';
 
-// Import des styles améliorés
-import './styles/enhanced-styles.css';
+// Import CSS standard - pas besoin de fichier CSS supplémentaire
+// Les améliorations seront ajoutées directement aux composants
 
 function App() {
   const dispatch = useDispatch();
@@ -134,13 +134,27 @@ function App() {
         onClose={() => setMessage({ text: '', type: '' })} 
       />
       
-      {/* Header with gradient */}
-      <header className="bg-gradient-to-r from-blue-700 to-blue-800 text-white p-4 shadow-md">
+      {/* Header avec une ombre améliorée */}
+      <header className="bg-blue-700 text-white p-4 shadow-md" style={{
+        background: 'linear-gradient(to right, #2563eb, #1d4ed8)',
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+      }}>
         <div className="container mx-auto flex justify-between items-center">
           <h1 className="text-2xl font-bold tracking-tight">Quản lý VM với Ansible</h1>
           <button
             onClick={disconnectVCenter}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-all hover:-translate-y-0.5 shadow"
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-all duration-200 hover:-translate-y-0.5 shadow"
+            style={{
+              transition: 'all 0.2s ease',
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+            }}
           >
             Đăng xuất
           </button>
@@ -170,7 +184,7 @@ function App() {
             onLog={onLog}
           />
           
-          {/* Log Viewer with improved animation */}
+          {/* Log Viewer avec animation améliorée */}
           {showLogs && (
             <LogViewer 
               logs={taskLog} 
@@ -211,6 +225,73 @@ function App() {
           isConnected={vCenterConnected}
         />
       )}
+
+      {/* Styles globaux injectés directement */}
+      <style jsx global>{`
+        button {
+          transition: all 0.15s ease;
+        }
+        
+        button:hover:not(:disabled) {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        button:active:not(:disabled) {
+          transform: translateY(0);
+          box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        
+        button:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
+
+        /* Animation du toast */
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .toast {
+          animation: slideInRight 0.3s ease forwards;
+        }
+        
+        /* Amélioration des formulaires */
+        input:focus, select:focus {
+          outline: none;
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        
+        /* Amélioration du tableau */
+        table tbody tr:hover {
+          background-color: #eff6ff;
+        }
+        
+        /* Styles pour les badges d'état */
+        .statusBadge {
+          transition: all 0.2s ease;
+        }
+        
+        .statusRunning {
+          background-color: #d1fae5;
+          color: #065f46;
+          border: 1px solid #a7f3d0;
+        }
+        
+        .statusStopped {
+          background-color: #f3f4f6;
+          color: #4b5563;
+          border: 1px solid #e5e7eb;
+        }
+        
+        .statusDeleted {
+          background-color: #fee2e2;
+          color: #b91c1c;
+          border: 1px solid #fecaca;
+        }
+      `}</style>
     </div>
   );
 }

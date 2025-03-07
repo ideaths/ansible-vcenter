@@ -2,7 +2,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
-const EnhancedVMPagination = ({
+const VMPagination = ({
   currentPage,
   totalPages,
   pageSize,
@@ -83,3 +83,4 @@ const PaginationButton = ({ onClick, disabled, title, icon }) => (
   </button>
 );
 
+export default VMPagination;

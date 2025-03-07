@@ -36,5 +36,6 @@ export const DEFAULT_VM = {
   disk_type: 'thin',
   wait_for_ip: 'yes',
   dns_servers: '191.168.1.53',
-  domain: 'idevops.io.vn'
+  domain: 'idevops.io.vn',
+  status: 'off' // Add default status
 };

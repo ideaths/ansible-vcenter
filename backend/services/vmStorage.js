@@ -12,7 +12,8 @@ const DEFAULT_CSV_HEADERS = [
   'template', 'guest_id', 'network', 'datastore', 'folder', 'hostname',
   'netmask', 'gateway', 'num_cpu_cores', 'scsi_type', 'boot_firmware',
   'network_type', 'network_device', 'disk_type', 'wait_for_ip', 'dns_servers', 'domain',
-  'tags' // Thêm trường tags
+  'tags', // Thêm trường tags
+  'status' // Add status field
 ];
 
 // Giá trị mặc định cho các trường

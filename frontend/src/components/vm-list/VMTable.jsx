@@ -93,7 +93,15 @@ const VMTable = ({
   );
 };
 
-const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, onPowerAction, onAddVM }) => (
+const VMActions = ({ 
+  vm, 
+  taskRunning, 
+  vCenterConnected, 
+  onEditVM, 
+  onDeleteVM, 
+  onPowerAction,
+  onRestoreVM  // Add this prop
+}) => (
   <div className={styles.actions}>
     {/* Power Actions */}
     {vm.status === 'on' ? (
@@ -134,10 +142,10 @@ const VMActions = ({ vm, taskRunning, vCenterConnected, onEditVM, onDeleteVM, on
       </button>
     )}
 
-    {/* Add button - show when action is 'destroy' */}
+    {/* Restore button - show when action is 'destroy' */}
     {vm.action === 'destroy' && (
       <button 
-        onClick={() => onAddVM && onAddVM(vm)} // Thêm check onAddVM và truyền vm
+        onClick={() => onRestoreVM(vm)}
         className={btnStyles.iconBtnPrimary}
         disabled={taskRunning || !vCenterConnected}
         title="Khôi phục VM"

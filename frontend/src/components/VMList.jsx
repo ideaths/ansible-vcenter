@@ -125,6 +125,22 @@ const VMList = ({
     </div>
   );
 
+  // Handle restoring VM (change from destroy to apply)
+  const handleRestoreVM = async (vm) => {
+    try {
+      const updatedVM = { ...vm, action: 'apply' };
+      const result = await apiService.createOrUpdateVM(updatedVM);
+      if (result.success) {
+        onRefresh();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error restoring VM:', error);
+      return false;
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow">
       <VMToolbar 
@@ -169,6 +185,7 @@ const VMList = ({
             onDeleteVM={onDeleteVM}
             onPowerAction={onPowerAction}
             onAddVM={onAddVM} // Thêm prop onAddVM vào đây
+            onRestoreVM={handleRestoreVM}
           />
         )}
       </div>

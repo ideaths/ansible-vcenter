@@ -96,7 +96,7 @@ def check_vcenter_connection():
     url = "https://${config.hostname}/rest/com/vmware/cis/session"
     headers = {
         "vmware-use-header-authn": "true",
-        "Authorization": "Basic ${Buffer.from(`${config.username}:${config.password}`).toString('base64')}"
+        "Authorization": "Basic ${Buffer.from(\`\${config.username}:\${config.password}\`).toString('base64')}"
     }
     try:
         response = requests.post(url, headers=headers, verify=${config.validateCerts ? 'True' : 'False'})
@@ -129,33 +129,34 @@ if __name__ == "__main__":
  * @returns {Promise<Object>} Kết quả kiểm tra
  */
 const checkVCenterConnection = async (config) => {
-  const tempScriptPath = await createTempPythonScript(config); // Thêm await vì createTempPythonScript giờ là async
+  const tempScriptPath = await createTempPythonScript(config);
 
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', [tempScriptPath]);
+    let output = '';
 
     pythonProcess.stdout.on('data', (data) => {
-      const output = data.toString();
-      if (output.includes('Connection successful')) {
-        resolve(true);
-      } else if (output.includes('Connection failed')) {
-        resolve(false);
-      }
+      output += data.toString();
+      console.log('Python output:', output); // Debug log
     });
 
     pythonProcess.stderr.on('data', (data) => {
       console.error('Python error:', data.toString());
-      reject(new Error(data.toString()));
     });
 
     pythonProcess.on('close', async (code) => {
       try {
-        await fs.unlink(tempScriptPath); // Thay thế unlinkSync bằng unlink
+        await fs.unlink(tempScriptPath);
       } catch (error) {
         console.error('Error deleting temp file:', error);
       }
-      if (code !== 0) {
-        reject(new Error(`Python script exited with code ${code}`));
+
+      if (output.includes('Connection successful')) {
+        resolve(true);
+      } else if (output.includes('Connection failed')) {
+        resolve(false);
+      } else {
+        reject(new Error('Unexpected response from connection test'));
       }
     });
   });

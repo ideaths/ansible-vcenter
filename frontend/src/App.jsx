@@ -10,6 +10,7 @@ import apiService from './services/api';
 import DeleteConfirmDialog from './components/DeleteConfirmDialog';
 import Toast, { useToast } from './components/Toast';
 import LoginPage from './pages/LoginPage';
+import { useVCenter } from './hooks/useVCenter';
 
 // Import CSS standard và các component khác
 
@@ -25,6 +26,14 @@ function App() {
   const [showLogs, setShowLogs] = useState(false);
   const [showVCenterConfig, setShowVCenterConfig] = useState(false);
   const [powerMessage, setPowerMessage] = useState('');
+
+  const {
+    vCenterConfig,
+    vCenterConnected,
+    connectToVCenter,
+    disconnectVCenter,
+    connectionError
+  } = useVCenter();
 
   // Hàm hiển thị thông báo sử dụng Toast
   const onMessage = (msg) => {

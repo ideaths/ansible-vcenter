@@ -1,67 +1,47 @@
 const { vCenterConfig } = require('../config/vcenterConfig');
-const { Client } = require('vmware-vsphere');
+// const { Client } = require('vmware-vsphere'); // Remove this line
 
-const client = new Client({
-  hostname: vCenterConfig.hostname,
-  username: vCenterConfig.username,
-  password: vCenterConfig.password,
-  insecure: !vCenterConfig.validateCerts
-});
+// Mock data for VMs
+const mockVMs = [
+  { vm_name: 'vm1', status: 'running' },
+  { vm_name: 'vm2', status: 'stopped' }
+];
 
 const getVMs = async () => {
-  try {
-    await client.login();
-    const vms = await client.vms.list();
-    await client.logout();
-    return vms;
-  } catch (error) {
-    console.error('Error fetching VMs:', error);
-    throw error;
-  }
+  // Return mock data instead of fetching from vCenter
+  return mockVMs;
 };
 
 const createOrUpdateVM = async (vmData) => {
-  try {
-    await client.login();
-    const existingVM = await client.vms.get(vmData.vm_name);
-    if (existingVM) {
-      await client.vms.update(vmData.vm_name, vmData);
-    } else {
-      await client.vms.create(vmData);
-    }
-    await client.logout();
-    return { success: true, message: 'VM created/updated successfully' };
-  } catch (error) {
-    console.error('Error creating/updating VM:', error);
-    throw error;
+  // Mock implementation
+  const existingVM = mockVMs.find(vm => vm.vm_name === vmData.vm_name);
+  if (existingVM) {
+    Object.assign(existingVM, vmData);
+  } else {
+    mockVMs.push(vmData);
   }
+  return { success: true, message: 'VM created/updated successfully' };
 };
 
 const deleteVM = async (vmName) => {
-  try {
-    await client.login();
-    await client.vms.delete(vmName);
-    await client.logout();
+  // Mock implementation
+  const index = mockVMs.findIndex(vm => vm.vm_name === vmName);
+  if (index !== -1) {
+    mockVMs.splice(index, 1);
     return { success: true, message: 'VM deleted successfully' };
-  } catch (error) {
-    console.error('Error deleting VM:', error);
-    throw error;
+  } else {
+    throw new Error('VM not found');
   }
 };
 
 const powerActionVM = async (vmName, action) => {
-  try {
-    await client.login();
-    if (action === 'start') {
-      await client.vms.powerOn(vmName);
-    } else if (action === 'stop') {
-      await client.vms.powerOff(vmName);
-    }
-    await client.logout();
+  // Mock implementation
+  const vm = mockVMs.find(vm => vm.vm_name === vmName);
+  if (vm) {
+    vm.status = action === 'start' ? 'running' : 'stopped';
     return { success: true, message: `VM ${action} successfully` };
-  } catch (error) {
-    console.error('Error performing power action on VM:', error);
-    throw error;
+  } else {
+    throw new Error('VM not found');
   }
 };
 

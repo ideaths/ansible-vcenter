@@ -17,6 +17,19 @@ const VMTable = ({
   onRestoreVM,
   onMessage
 }) => {
+  const statusDisplay = {
+    className: 'bg-green-100 text-green-800',
+    text: 'Running'
+  };
+
+  const actionButtonStyle = {
+    transition: 'all 0.2s ease'
+  };
+
+  const getHoverStyle = (color) => ({
+    backgroundColor: color,
+    transition: 'all 0.2s ease'
+  });
 
   return (
     <div className="overflow-x-auto">

@@ -11,7 +11,8 @@ const DEFAULT_CSV_HEADERS = [
   'action', 'vm_name', 'num_cpus', 'memory_mb', 'disk_size_gb', 'ip', 
   'template', 'guest_id', 'network', 'datastore', 'folder', 'hostname',
   'netmask', 'gateway', 'num_cpu_cores', 'scsi_type', 'boot_firmware',
-  'network_type', 'network_device', 'disk_type', 'wait_for_ip', 'dns_servers', 'domain'
+  'network_type', 'network_device', 'disk_type', 'wait_for_ip', 'dns_servers', 'domain',
+  'tags' // Thêm trường tags
 ];
 
 // Giá trị mặc định cho các trường
@@ -36,7 +37,8 @@ const DEFAULT_VM_VALUES = {
   disk_type: 'thin',
   wait_for_ip: 'yes',
   dns_servers: '191.168.1.53',
-  domain: 'idevops.io.vn'
+  domain: 'idevops.io.vn',
+  tags: '' // Thêm giá trị mặc định cho tags
 };
 
 /**

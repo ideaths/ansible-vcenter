@@ -28,6 +28,7 @@ const VMList = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [guestOSFilter, setGuestOSFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('all');
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -43,7 +44,7 @@ const VMList = ({
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, guestOSFilter]);
+  }, [searchTerm, statusFilter, guestOSFilter, tagFilter]);
 
   // Chỉ gọi onRefresh một lần khi component mount
   useEffect(() => {
@@ -52,6 +53,18 @@ const VMList = ({
     }
   }, [vCenterConnected]); // Chỉ gọi lại khi trạng thái kết nối thay đổi
 
+  // Get unique tags from all VMs
+  const availableTags = useMemo(() => {
+    if (!vms?.length) return [];
+    const tags = new Set();
+    vms.forEach(vm => {
+      if (vm.tags) {
+        vm.tags.split(',').forEach(tag => tags.add(tag.trim()));
+      }
+    });
+    return Array.from(tags).filter(tag => tag);
+  }, [vms]);
+
   // Filtered VMs
   const filteredVMs = useMemo(() => {
     if (!vms?.length) return [];
@@ -59,7 +72,8 @@ const VMList = ({
     return vms.filter(vm => {
       const matchesSearch = !searchTerm || 
         vm.vm_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vm.ip?.toLowerCase().includes(searchTerm.toLowerCase());
+        vm.ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        vm.tags?.toLowerCase().includes(searchTerm.toLowerCase()); // Add tag search
 
       const matchesStatus = statusFilter === 'all' || 
         (statusFilter === 'running' && vm.status === 'running') ||
@@ -68,9 +82,12 @@ const VMList = ({
       const matchesGuestOS = guestOSFilter === 'all' || 
         (vm.guest_id && guestOSMap[vm.guest_id] === guestOSFilter);
 
-      return matchesSearch && matchesStatus && matchesGuestOS;
+      const matchesTag = tagFilter === 'all' || 
+        (vm.tags && vm.tags.split(',').map(t => t.trim()).includes(tagFilter));
+
+      return matchesSearch && matchesStatus && matchesGuestOS && matchesTag;
     });
-  }, [vms, searchTerm, statusFilter, guestOSFilter]);
+  }, [vms, searchTerm, statusFilter, guestOSFilter, tagFilter]);
 
   // Paginated data
   const paginatedVMs = useMemo(() => {
@@ -102,6 +119,7 @@ const VMList = ({
     setSearchTerm('');
     setStatusFilter('all');
     setGuestOSFilter('all');
+    setTagFilter('all');
     setCurrentPage(1);
   };
 
@@ -177,6 +195,9 @@ const VMList = ({
         guestOSFilter={guestOSFilter}
         setGuestOSFilter={setGuestOSFilter}
         guestOSMap={guestOSMap}
+        tagFilter={tagFilter}
+        setTagFilter={setTagFilter}
+        availableTags={availableTags}
         resetFilters={resetFilters}
       />
 

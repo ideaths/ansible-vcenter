@@ -9,6 +9,8 @@ import btnStyles from '../styles/common/buttons.module.css';
 
 const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
   const [formData, setFormData] = useState(vm || DEFAULT_VM);
+  const [tags, setTags] = useState(vm?.tags?.split(',').map(t => t.trim()) || []);
+  const [newTag, setNewTag] = useState('');
 
   useEffect(() => {
     const mergedData = { ...DEFAULT_VM, ...(vm || {}) };
@@ -21,6 +23,17 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
       ...formData,
       [name]: type === 'checkbox' ? (checked ? 'yes' : 'no') : value
     });
+  };
+
+  const addTag = () => {
+    if (newTag && !tags.includes(newTag)) {
+      setTags([...tags, newTag]);
+      setNewTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const handleSubmit = (e) => {
@@ -44,7 +57,11 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
       cleanedData.hostname = cleanedData.vm_name;
     }
     
-    onSubmit(cleanedData); // Submit with original action value
+    const updatedFormData = {
+      ...cleanedData,
+      tags: tags.join(',')
+    };
+    onSubmit(updatedFormData); // Submit with original action value
   };
 
   return (
@@ -84,6 +101,44 @@ const VMForm = ({ vm, onSubmit, onCancel, isLoading }) => {
                 onChange={handleChange} 
                 isLoading={isLoading} 
               />
+            </div>
+
+            {/* Tags Section */}
+            <div className={styles.tagsSection}>
+              <label className={styles.label}>Tags</label>
+              <div className={styles.tagInput}>
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                  placeholder="Add a tag..."
+                  className={styles.input}
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={addTag}
+                  className={btnStyles.btnSecondary}
+                  disabled={isLoading || !newTag}
+                >
+                  Add
+                </button>
+              </div>
+              <div className={styles.tagsList}>
+                {tags.map(tag => (
+                  <span key={tag} className={styles.tag}>
+                    {tag}
+                    <button
+                      onClick={() => removeTag(tag)}
+                      className={styles.tagRemove}
+                      disabled={isLoading}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
 
             <div className={styles.formFooter}>

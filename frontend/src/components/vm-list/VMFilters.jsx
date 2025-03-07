@@ -10,6 +10,9 @@ const VMFilters = ({
   setStatusFilter,
   guestOSFilter,
   setGuestOSFilter,
+  tagFilter,   // Add this
+  setTagFilter, // Add this
+  availableTags, // Add this
   guestOSMap,
   resetFilters
 }) => {
@@ -60,6 +63,20 @@ const VMFilters = ({
           <option value="all">Tất cả OS</option>
           {Object.entries(guestOSMap).map(([key, value]) => (
             <option key={key} value={value}>{value}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tag Filter */}
+      <div className={styles.filterWrapper}>
+        <select 
+          value={tagFilter}
+          onChange={(e) => setTagFilter(e.target.value)}
+          className={styles.select}
+        >
+          <option value="all">Tất cả tags</option>
+          {availableTags.map(tag => (
+            <option key={tag} value={tag}>{tag}</option>
           ))}
         </select>
       </div>

@@ -5,7 +5,7 @@ import VMFilters from './vm-list/VMFilters';
 import VMTable from './vm-list/VMTable';
 import VMPagination from './vm-list/VMPagination';
 import { INFO_MESSAGES } from '../constants/messages';
-import apiService from '../services/api'; // Thêm dòng này để import apiService
+import apiService from '../services/api';
 
 const VMList = ({ 
   vms, 
@@ -20,15 +20,16 @@ const VMList = ({
   onPowerAction, 
   onRunAnsible,
   taskRunning,
+  taskPower, // Thêm prop mới nhận từ App.jsx
   onRefresh,
-  onMessage, // Thêm prop onMessage
-  onLog, // Thêm prop onLog
+  onMessage,
+  onLog,
 }) => {
   // Search and filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [guestOSFilter, setGuestOSFilter] = useState('all');
-  const [tagFilter, setTagFilter] = useState([]); // Thay đổi từ 'all' thành mảng rỗng
+  const [tagFilter, setTagFilter] = useState([]);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -65,32 +66,37 @@ const VMList = ({
     return Array.from(tags).filter(tag => tag);
   }, [vms]);
 
-  // Filtered VMs
-  const filteredVMs = useMemo(() => {
-    if (!vms?.length) return [];
-    
-    return vms.filter(vm => {
-      const matchesSearch = !searchTerm || 
-        vm.vm_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vm.ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        vm.tags?.toLowerCase().includes(searchTerm.toLowerCase()); // Add tag search
+ // Cập nhật hàm filter trong VMList.jsx
 
-      const matchesStatus = statusFilter === 'all' || 
-        (statusFilter === 'running' && vm.status === 'running') ||
-        (statusFilter === 'stopped' && vm.status !== 'running');
+// Thay thế đoạn mã này trong hàm filteredVMs
+const filteredVMs = useMemo(() => {
+  if (!vms?.length) return [];
+  
+  return vms.filter(vm => {
+    const matchesSearch = !searchTerm || 
+      vm.vm_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vm.ip?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vm.tags?.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesGuestOS = guestOSFilter === 'all' || 
-        (vm.guest_id && guestOSMap[vm.guest_id] === guestOSFilter);
+    // Điều kiện status filter đã được cập nhật
+    const matchesStatus = 
+      statusFilter === 'all' || 
+      (statusFilter === 'running' && vm.status === 'on' && vm.action === 'apply') ||
+      (statusFilter === 'stopped' && vm.status === 'off' && vm.action === 'apply') ||
+      (statusFilter === 'deleted' && vm.status === 'off' && vm.action === 'destroy');
 
-      const matchesTag = tagFilter.length === 0 || 
-        (vm.tags && tagFilter.every(tag => 
-          vm.tags.split(',').map(t => t.trim()).includes(tag)
-        ));
+    const matchesGuestOS = guestOSFilter === 'all' || 
+      (vm.guest_id && guestOSMap[vm.guest_id] === guestOSFilter);
 
-      return matchesSearch && matchesStatus && matchesGuestOS && matchesTag;
-    });
-  }, [vms, searchTerm, statusFilter, guestOSFilter, tagFilter]);
+    const matchesTag = tagFilter.length === 0 || 
+      (vm.tags && tagFilter.every(tag => 
+        vm.tags.split(',').map(t => t.trim()).includes(tag)
+      ));
 
+    return matchesSearch && matchesStatus && matchesGuestOS && matchesTag;
+  });
+}, [vms, searchTerm, statusFilter, guestOSFilter, tagFilter]);
+  
   // Paginated data
   const paginatedVMs = useMemo(() => {
     const startIndex = (currentPage - 1) * pageSize;
@@ -121,7 +127,7 @@ const VMList = ({
     setSearchTerm('');
     setStatusFilter('all');
     setGuestOSFilter('all');
-    setTagFilter([]); // Reset về mảng rỗng
+    setTagFilter([]);
     setCurrentPage(1);
   };
 
@@ -220,11 +226,13 @@ const VMList = ({
             guestOSMap={guestOSMap}
             vCenterConnected={vCenterConnected}
             taskRunning={taskRunning}
+            taskPower={taskPower} // Truyền xuống taskPower cho VMTable
             onEditVM={onEditVM}
             onDeleteVM={onDeleteVM}
             onPowerAction={onPowerAction}
-            onAddVM={onAddVM} // Thêm prop onAddVM vào đây
+            onAddVM={onAddVM}
             onRestoreVM={handleRestoreVM}
+            onMessage={onMessage} // Thêm onMessage
           />
         )}
       </div>

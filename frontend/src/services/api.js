@@ -127,7 +127,7 @@ const apiService = {
   },
 
   /**
-   * Đăng ký thay đổi trạng thái nguồn VM (start/stop) - không chạy Ansible
+   * Thực hiện thay đổi trạng thái nguồn VM (start/stop) - Chạy Ansible ngay lập tức
    * @param {string} vmName - Tên VM
    * @param {string} action - Hành động (start, stop)
    * @returns {Promise<Object>} Kết quả thao tác
@@ -135,9 +135,13 @@ const apiService = {
   powerActionVM: async (vmName, action) => {
     try {
       store.dispatch(startLoading({
-        message: 'Đang thay đổi trạng thái VM...',
+        message: `Đang ${action === 'start' ? 'khởi động' : 'dừng'} VM...`,
         persist: true // cần persist vì thao tác có thể mất nhiều thời gian
       }));
+      
+      // Loại bỏ dòng sử dụng onLog
+      // onLog && onLog(`Đang chạy Ansible để ${action === 'start' ? 'khởi động' : 'dừng'} VM: ${vmName}`);
+      
       const response = await apiClient.post(`/vms/${vmName}/power`, { action });
       store.dispatch(stopLoading());
       return response.data;
@@ -147,6 +151,7 @@ const apiService = {
       throw error;
     }
   },
+
   
   /**
    * Chạy Ansible để thực hiện các thay đổi đã đăng ký lên vCenter

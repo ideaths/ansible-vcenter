@@ -1,7 +1,6 @@
 import React from 'react';
 import { Search, X, Filter, Plus } from 'lucide-react';
 import styles from '../../styles/components/VMList/VMFilters.module.css';
-import { VM_STATUS } from '../../constants/vmConstants';
 
 const VMFilters = ({
   searchTerm,
@@ -40,7 +39,7 @@ const VMFilters = ({
         )}
       </div>
 
-      {/* Status Filter */}
+      {/* Status Filter - Updated for new status display */}
       <div className={styles.filterWrapper}>
         <select 
           value={statusFilter}
@@ -48,8 +47,9 @@ const VMFilters = ({
           className={styles.select}
         >
           <option value="all">Tất cả trạng thái</option>
-          <option value={VM_STATUS.RUNNING}>Đang chạy</option>
-          <option value={VM_STATUS.STOPPED}>Đã dừng</option>
+          <option value="running">Đang chạy</option>
+          <option value="stopped">Đang dừng</option>
+          <option value="deleted">Deleted</option>
         </select>
       </div>
 

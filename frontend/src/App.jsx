@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { restoreLoadingState } from './store/loadingSlice';
 import { useVCenter } from './hooks/useVCenter';
@@ -22,9 +22,11 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
   const [taskRunning, setTaskRunning] = useState(false);
+  const [taskPower, setTaskPower] = useState(false); // Thêm state mới cho taskPower
   const [taskLog, setTaskLog] = useState([]);
   const [showLogs, setShowLogs] = useState(false);
   const [showVCenterConfig, setShowVCenterConfig] = useState(false);
+  const [powerMessage, setPowerMessage] = useState('');
 
   const onMessage = (msg) => setMessage(msg);
   const onLog = (log) => setTaskLog(prev => Array.isArray(log) ? [...prev, ...log] : [...prev, log]);
@@ -32,9 +34,10 @@ function App() {
   const { vCenterConfig, vCenterConnected, connectToVCenter, disconnectVCenter } = 
     useVCenter(onMessage, onLog);
 
+  // Sửa lại useVM để truyền thêm setTaskPower
   const { currentVm, showForm, showDeleteConfirm, setCurrentVm, setShowForm, 
     setShowDeleteConfirm, handleSubmitVM, handleDeleteVM, handlePowerAction } = 
-    useVM(onMessage, onLog, fetchVMs);
+    useVM(onMessage, onLog, fetchVMs, setTaskPower); // Truyền thêm setTaskPower
 
   const { ansibleRunning, runAnsible } = useAnsible(onMessage, onLog, fetchVMs);
 
@@ -75,6 +78,19 @@ function App() {
     setShowDeleteConfirm(true);
   };
 
+  // Sửa lại để dùng với taskPower
+  const handlePowerActionWithState = async (vm, action) => {
+    setTaskPower(true);
+    setPowerMessage(`Đang chạy Ansible để ${action === 'start' ? 'khởi động' : 'dừng'} VM: ${vm.vm_name}`);
+    
+    try {
+      await handlePowerAction(vm, action);
+    } finally {
+      setTaskPower(false);
+      setPowerMessage('');
+    }
+  };
+  
   // Handle running Ansible
   const handleRunAnsible = async () => {
     if (!ansibleRunning) {
@@ -110,7 +126,7 @@ function App() {
   // Otherwise show main content
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
-      <LoadingOverlay />
+      <LoadingOverlay taskPower={taskPower} powerMessage={powerMessage} />
       <Toast 
         message={message} 
         onClose={() => setMessage({ text: '', type: '' })} 
@@ -142,20 +158,21 @@ function App() {
             onAddVM={handleAddVM}
             onEditVM={handleEditVM}
             onDeleteVM={handleDeleteConfirm}
-            onPowerAction={handlePowerAction}
+            onPowerAction={handlePowerActionWithState} // Sử dụng hàm mới có quản lý state
             onConfigVCenter={() => setShowVCenterConfig(true)}
             onRunAnsible={handleRunAnsible}
             taskRunning={taskRunning}
-            onRefresh={fetchVMs} // Add this line
-            onMessage={onMessage} // Thêm prop onMessage
-            onLog={onLog} // Thêm prop onLog
+            taskPower={taskPower} // Truyền xuống taskPower
+            onRefresh={fetchVMs}
+            onMessage={onMessage}
+            onLog={onLog}
           />
           
           {/* Log Viewer */}
           {showLogs && (
             <LogViewer 
               logs={taskLog} 
-              isLoading={taskRunning} 
+              isLoading={taskRunning || taskPower} // Cập nhật để kiểm tra cả taskPower
               onClose={() => setShowLogs(false)} 
             />
           )}
@@ -166,6 +183,7 @@ function App() {
       {showForm && (
         <VMForm 
           vm={currentVm} 
+          vms={vms} // Thêm vms vào đây
           onSubmit={handleSubmitVM} 
           onCancel={() => setShowForm(false)} 
           isLoading={taskRunning} 

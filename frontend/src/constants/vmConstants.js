@@ -37,5 +37,6 @@ export const DEFAULT_VM = {
   wait_for_ip: 'yes',
   dns_servers: '191.168.1.53',
   domain: 'idevops.io.vn',
-  status: 'off' // Add default status
+  status: 'on', // Thay đổi giá trị mặc định từ 'off' thành 'on'
+  tags: '' // Giá trị mặc định cho tags
 };

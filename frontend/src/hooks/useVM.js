@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import apiService from '../services/api';
 
-export const useVM = (onMessage, onLog, onRefreshVMs) => {
+export const useVM = (onMessage, onLog, onRefreshVMs, setTaskPower) => {
   const [currentVm, setCurrentVm] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -66,37 +66,41 @@ export const useVM = (onMessage, onLog, onRefreshVMs) => {
 
   const handlePowerAction = async (vm, action) => {
     try {
+      // Thông báo rõ ràng rằng đang chạy Ansible cho power action
+      onLog(`Đang chạy Ansible để ${action === 'start' ? 'khởi động' : 'dừng'} VM: ${vm.vm_name}`);
+      
       const result = await apiService.powerActionVM(vm.vm_name, action);
       
       if (result.success) {
-        onLog(`Power action ${action} đã được đăng ký cho VM: ${vm.vm_name}`);
+        onLog([
+          `Ansible đã thực thi thành công!`,
+          `Power action ${action === 'start' ? 'khởi động' : 'dừng'} đã được áp dụng cho VM: ${vm.vm_name}`
+        ]);
+        
         onMessage({
-          text: `${action === 'start' ? 'Khởi động' : 'Dừng'} VM ${vm.vm_name} đã được đăng ký. Đang thực hiện...`,
-          type: 'info'
+          text: `VM ${vm.vm_name} đã được ${action === 'start' ? 'khởi động' : 'dừng'} thành công`,
+          type: 'success'
         });
-
-        // Run Ansible immediately for power actions
-        const ansibleResult = await apiService.runAnsible();
-        if (ansibleResult.success) {
-          onRefreshVMs();
-          onMessage({
-            text: `${action === 'start' ? 'Khởi động' : 'Dừng'} VM ${vm.vm_name} thành công`,
-            type: 'success'
-          });
-        }
+        
+        // Cập nhật lại danh sách VM để lấy trạng thái mới
+        onRefreshVMs();
         return true;
       }
       throw new Error(result.message || 'Có lỗi xảy ra');
     } catch (error) {
-      onLog(`Lỗi: ${error.error || error.message}`);
+      onLog([
+        `Lỗi khi chạy Ansible cho power action: ${error.error || error.message}`,
+        `Không thể ${action === 'start' ? 'khởi động' : 'dừng'} VM: ${vm.vm_name}`
+      ]);
+      
       onMessage({
-        text: `Lỗi khi thay đổi trạng thái nguồn: ${error.error || error.message}`,
+        text: `Lỗi khi ${action === 'start' ? 'khởi động' : 'dừng'} VM: ${error.error || error.message}`,
         type: 'error'
       });
       return false;
     }
   };
-
+  
   return {
     currentVm,
     setCurrentVm,

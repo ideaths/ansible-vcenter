@@ -3,7 +3,7 @@
 }
 
 .formContainer {
-  @apply bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-full overflow-y-auto;
+  @apply bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-full overflow-y-auto;
 }
 
 .formContent {
@@ -18,8 +18,9 @@
   @apply text-xl font-semibold;
 }
 
+/* Thay đổi grid-cols-3 thành grid-cols-4 */
 .formGrid {
-  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4;
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
 }
 
 .formFooter {
@@ -65,4 +66,8 @@
 
 .tagRemove {
   @apply ml-1 text-blue-500 hover:text-blue-700;
+}
+
+.sectionHeader {
+  @apply col-span-full text-lg font-medium text-gray-700 border-b pb-2 mt-4 mb-2;
 }

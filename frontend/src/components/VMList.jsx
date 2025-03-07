@@ -5,6 +5,7 @@ import VMFilters from './vm-list/VMFilters';
 import VMTable from './vm-list/VMTable';
 import VMPagination from './vm-list/VMPagination';
 import { INFO_MESSAGES } from '../constants/messages';
+import apiService from '../services/api'; // Thêm dòng này để import apiService
 
 const VMList = ({ 
   vms, 

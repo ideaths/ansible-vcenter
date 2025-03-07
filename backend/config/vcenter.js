@@ -78,163 +78,82 @@ const DEFAULT_CONFIG = {
 };
 
 /**
+ * Tạo file Python tạm thời để kiểm tra kết nối vCenter
+ * @param {Object} config Cấu hình vCenter
+ * @returns {string} Đường dẫn đến file tạm
+ */
+const createTempPythonScript = (config) => {
+  const scriptContent = `
+import ssl
+import requests
+
+def check_vcenter_connection():
+    url = "https://${config.hostname}/rest/com/vmware/cis/session"
+    headers = {
+        "vmware-use-header-authn": "true",
+        "Authorization": "Basic ${Buffer.from(`${config.username}:${config.password}`).toString('base64')}"
+    }
+    try:
+        response = requests.post(url, headers=headers, verify=${config.validateCerts})
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    except requests.exceptions.SSLError as ssl_error:
+        print(f"SSL Error: {ssl_error}")
+        return False
+    except requests.exceptions.RequestException as req_error:
+        print(f"Request Error: {req_error}")
+        return False
+
+if __name__ == "__main__":
+    if check_vcenter_connection():
+        print("Connection successful")
+    else:
+        print("Connection failed")
+`;
+
+  const tempFilePath = path.join(__dirname, '../data/temp_vcenter_check.py');
+  fs.writeFileSync(tempFilePath, scriptContent);
+  return tempFilePath;
+};
+
+/**
  * Kiểm tra kết nối vCenter bằng cách sử dụng Python script
  * @param {Object} config Cấu hình vCenter
  * @returns {Promise<Object>} Kết quả kiểm tra
  */
-async function testVCenterConnection(config) {
+const checkVCenterConnection = async (config) => {
+  const tempScriptPath = createTempPythonScript(config);
+
   return new Promise((resolve, reject) => {
-    // Validate input
-    const requiredFields = ['hostname', 'username', 'password', 'datacenter'];
-    for (const field of requiredFields) {
-      if (!config[field]) {
-        return reject(new Error(`Thiếu trường bắt buộc: ${field}`));
+    const pythonProcess = spawn('python3', [tempScriptPath]);
+
+    pythonProcess.stdout.on('data', (data) => {
+      const output = data.toString();
+      if (output.includes('Connection successful')) {
+        resolve(true);
+      } else if (output.includes('Connection failed')) {
+        resolve(false);
       }
-    }
+    });
 
-    // Tạo Python script để kiểm tra kết nối
-    const pythonScript = `import sys
-    import ssl
-    import json
-    from pyVim import connect
-    from pyVmomi import vim
-    
-    # Tắt cảnh báo chứng chỉ nếu không xác thực
-    validate_certs = ${config.validateCerts ? 'True' : 'False'}
-    if not validate_certs:
-        ssl._create_default_https_context = ssl._create_unverified_context
-    
-    try:
-        # Thử kết nối đến vCenter
-        service_instance = connect.SmartConnect(
-            host="${config.hostname}",
-            user="${config.username}",
-            pwd="${config.password}",
-            port=443
-        )
-        
-        # Kiểm tra xem datacenter có tồn tại không
-        content = service_instance.RetrieveContent()
-        datacenters = content.rootFolder.childEntity
-        datacenter_found = False
-        
-        for dc in datacenters:
-            if dc.name == "${config.datacenter}":
-                datacenter_found = True
-                break
-        
-        # Ngắt kết nối
-        connect.Disconnect(service_instance)
-        
-        # Trả về kết quả dưới dạng JSON
-        result = {
-            'success': True,
-            'message': 'Kết nối thành công',
-            'datacenter_found': datacenter_found
-        }
-        print(json.dumps(result))
-        sys.exit(0)
-    
-    except vim.fault.InvalidLogin as e:
-        # Lỗi đăng nhập không hợp lệ
-        error_result = {
-            'success': False,
-            'message': 'Thông tin đăng nhập không chính xác',
-            'errorCode': 'INVALID_CREDENTIALS',
-            'detail': str(e)
-        }
-        print(json.dumps(error_result))
-        sys.exit(1)
-    
-    except Exception as e:
-        # Trả về lỗi dưới dạng JSON
-        error_result = {
-            'success': False,
-            'message': str(e),
-            'errorCode': 'CONNECTION_FAILED'
-        }
-        print(json.dumps(error_result))
-        sys.exit(1)
-    `;
-    
-    // Tạo file tạm thời để chứa script Python
-    const tempScriptPath = path.join(__dirname, '../data/temp_vcenter_check.py');
-    
-    fs.writeFile(tempScriptPath, pythonScript, 'utf8')
-      .then(() => {
-        // Chạy script Python
-        const process = spawn('python3', [tempScriptPath]);
-        
-        let output = '';
-        let errorOutput = '';
+    pythonProcess.stderr.on('data', (data) => {
+      console.error('Python error:', data.toString());
+      reject(new Error(data.toString()));
+    });
 
-        process.stdout.on('data', (data) => {
-          output += data.toString();
-        });
-
-        process.stderr.on('data', (data) => {
-          errorOutput += data.toString();
-        });
-
-        process.on('close', async (code) => {
-          // Xóa file tạm
-          try {
-            await fs.unlink(tempScriptPath);
-          } catch {}
-
-          if (code === 0) {
-            try {
-              const result = JSON.parse(output);
-              
-              if (result.success) {
-                // Nếu có cảnh báo, vẫn thành công nhưng thêm thông tin
-                if (result.warning) {
-                  result.warning = true;
-                  result.warningMessage = result.warning;
-                }
-                
-                // Lưu cấu hình sau khi kiểm tra thành công
-                await saveVCenterConfig(config);
-              }
-              
-              resolve(result);
-            } catch (parseError) {
-              reject(new Error('Lỗi phân tích kết quả: ' + parseError.message));
-            }
-          } else {
-            try {
-              // Xử lý lỗi chi tiết từ python script
-              const errorResult = JSON.parse(output || errorOutput);
-              
-              // Lưu chi tiết lỗi vào log nhưng không trả về client
-              if (errorResult.detail) {
-                console.error('Chi tiết lỗi Python:', errorResult.detail);
-                // Xóa thông tin chi tiết có thể nhạy cảm trước khi trả về client
-                delete errorResult.detail;
-              }
-              
-              resolve(errorResult);
-            } catch {
-              // Fallback nếu không parse được JSON
-              reject(new Error(errorOutput || 'Lỗi không xác định khi kết nối vCenter'));
-            }
-          }
-        });
-
-        process.on('error', (err) => {
-          console.error('Lỗi khi chạy script Python:', err);
-          reject(new Error('Không thể chạy script kiểm tra vCenter'));
-        });
-      })
-      .catch(writeError => {
-        console.error('Lỗi khi tạo file tạm:', writeError);
-        reject(new Error('Không thể tạo script kiểm tra vCenter'));
-      });
+    pythonProcess.on('close', (code) => {
+      fs.unlinkSync(tempScriptPath); // Xóa file tạm sau khi hoàn thành
+      if (code !== 0) {
+        reject(new Error(`Python script exited with code ${code}`));
+      }
+    });
   });
-}
+};
 
 module.exports = {
   getVCenterConfig,
   saveVCenterConfig,
-  testVCenterConnection
+  checkVCenterConnection
 };

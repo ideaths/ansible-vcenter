@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { RefreshCw, Server, Lock, User, Database, Link, Globe, Shield } from 'lucide-react';
-import styles from '../styles/components/VCenterConfig.module.css';
-import newStyles from '../styles/components/EnhancedVCenterConfig.module.css';
+import { RefreshCw, Server, Lock, User, Database, Globe, Shield } from 'lucide-react';
+import styles from '../styles/components/EnhancedVCenterConfig.module.css';
 
 const VCenterConfig = ({ onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -26,56 +25,56 @@ const VCenterConfig = ({ onSubmit, isLoading }) => {
   };
 
   return (
-    <div className={newStyles.container}>
-      <div className={newStyles.content}>
-        <form onSubmit={handleSubmit} className={newStyles.formContainer}>
-          <div className={newStyles.formGrid}>
-            <div className={newStyles.formField}>
-              <label className={newStyles.label}>vCenter Hostname</label>
-              <div className={newStyles.inputWithIcon}>
+    <div className={styles.container}>
+      <div className={styles.content}>
+        <form onSubmit={handleSubmit} className={styles.formContainer}>
+          <div className={styles.formGrid}>
+            <div className={styles.formField}>
+              <label className={styles.label}>vCenter Hostname</label>
+              <div className={styles.inputWithIcon}>
                 <Globe className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   name="hostname"
                   value={formData.hostname}
                   onChange={handleChange}
-                  className={`${newStyles.input} pl-10`}
+                  className={`${styles.input} pl-10`}
                   placeholder="vcenter.example.com"
                   required
                   disabled={isLoading}
                 />
               </div>
-              <p className={newStyles.helpText}>Địa chỉ máy chủ vCenter của bạn (hostname hoặc IP)</p>
+              <p className={styles.helpText}>Địa chỉ máy chủ vCenter của bạn (hostname hoặc IP)</p>
             </div>
             
-            <div className={newStyles.formField}>
-              <label className={newStyles.label}>Username</label>
-              <div className={newStyles.inputWithIcon}>
+            <div className={styles.formField}>
+              <label className={styles.label}>Username</label>
+              <div className={styles.inputWithIcon}>
                 <User className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
-                  className={`${newStyles.input} pl-10`}
+                  className={`${styles.input} pl-10`}
                   placeholder="administrator@vsphere.local"
                   required
                   disabled={isLoading}
                 />
               </div>
-              <p className={newStyles.helpText}>Tài khoản quản trị có quyền truy cập API</p>
+              <p className={styles.helpText}>Tài khoản quản trị có quyền truy cập API</p>
             </div>
             
-            <div className={newStyles.formField}>
-              <label className={newStyles.label}>Password</label>
-              <div className={newStyles.inputWithIcon}>
+            <div className={styles.formField}>
+              <label className={styles.label}>Password</label>
+              <div className={styles.inputWithIcon}>
                 <Lock className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="password"
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`${newStyles.input} pl-10`}
+                  className={`${styles.input} pl-10`}
                   placeholder="Nhập mật khẩu"
                   required
                   disabled={isLoading}
@@ -83,25 +82,25 @@ const VCenterConfig = ({ onSubmit, isLoading }) => {
               </div>
             </div>
             
-            <div className={newStyles.formField}>
-              <label className={newStyles.label}>Datacenter</label>
-              <div className={newStyles.inputWithIcon}>
+            <div className={styles.formField}>
+              <label className={styles.label}>Datacenter</label>
+              <div className={styles.inputWithIcon}>
                 <Database className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   name="datacenter"
                   value={formData.datacenter}
                   onChange={handleChange}
-                  className={`${newStyles.input} pl-10`}
+                  className={`${styles.input} pl-10`}
                   placeholder="Home"
                   required
                   disabled={isLoading}
                 />
               </div>
-              <p className={newStyles.helpText}>Tên Datacenter trong vCenter của bạn</p>
+              <p className={styles.helpText}>Tên Datacenter trong vCenter của bạn</p>
             </div>
             
-            <div className={`${newStyles.formField} flex items-center`}>
+            <div className={`${styles.formField} flex items-center`}>
               <div className="flex items-center">
                 <input
                   type="checkbox"
@@ -109,10 +108,10 @@ const VCenterConfig = ({ onSubmit, isLoading }) => {
                   name="validateCerts"
                   checked={formData.validateCerts}
                   onChange={handleChange}
-                  className={newStyles.checkbox}
+                  className={styles.checkbox}
                   disabled={isLoading}
                 />
-                <label htmlFor="validateCerts" className={newStyles.checkboxLabel}>
+                <label htmlFor="validateCerts" className={styles.checkboxLabel}>
                   <div className="flex items-center">
                     <Shield className="h-4 w-4 mr-1 text-gray-500" />
                     Xác thực chứng chỉ SSL
@@ -122,10 +121,10 @@ const VCenterConfig = ({ onSubmit, isLoading }) => {
             </div>
           </div>
           
-          <div className={newStyles.footer}>
+          <div className={styles.footer}>
             <button
               type="submit"
-              className={newStyles.connectButton}
+              className={styles.connectButton}
               disabled={isLoading}
             >
               {isLoading ? (

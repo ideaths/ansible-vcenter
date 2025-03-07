@@ -1,12 +1,36 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Server, Shield, Database, Activity, ExternalLink, RefreshCw } from 'lucide-react';
 import VCenterConfig from '../components/VCenterConfig';
+import Toast, { useToast } from '../components/Toast';
 
-const LoginPage = ({ onConnect, isLoading }) => {
+const LoginPage = ({ onConnect, isLoading, connectionError }) => {
+  // Sử dụng hook useToast
+  const toast = useToast();
+  
+  // Hiển thị thông báo lỗi khi connectionError thay đổi
+  useEffect(() => {
+    if (connectionError) {
+      // Không gọi resetSession nữa
+      toast.error(connectionError, {
+        title: 'Lỗi kết nối',
+        autoClose: 6000 // Thời gian hiển thị
+      });
+    }
+  }, [connectionError, toast]);
+
+  // Hàm xử lý kết nối với thông báo toast
+  const handleConnect = (formData) => {
+    // Không gọi resetSession nữa
+    onConnect(formData);
+  };
+
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
+    <div className="h-screen flex flex-col md:flex-row overflow-hidden">
+      {/* Toast container sẽ hiển thị ở góc trên bên phải */}
+      <Toast toasts={toast.toasts} removeToast={toast.removeToast} />
+      
       {/* Left side - Brand/Info Panel */}
-      <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 md:w-1/2 p-8 md:p-12 flex flex-col justify-between text-white">
+      <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 md:w-1/2 h-full p-8 md:p-12 flex flex-col justify-between overflow-auto">
         <div>
           <div className="mb-8">
             <div className="flex items-center mb-6">
@@ -19,7 +43,7 @@ const LoginPage = ({ onConnect, isLoading }) => {
             </p>
           </div>
           
-          <div className="space-y-6 mt-12 hidden md:block">
+          <div className="space-y-6 mt-6 hidden md:block">
             <Feature 
               icon={<Shield className="h-6 w-6 text-blue-300" />}
               title="Bảo mật"
@@ -38,15 +62,15 @@ const LoginPage = ({ onConnect, isLoading }) => {
           </div>
         </div>
         
-        <div className="text-sm text-blue-200 mt-12 pt-6 border-t border-blue-600">
+        <div className="text-sm text-blue-200 mt-6 pt-4 border-t border-blue-600">
           <p>© 2025 iDEVOPS | Powered by Ansible & VMware</p>
         </div>
       </div>
       
       {/* Right side - Login Form */}
-      <div className="md:w-1/2 bg-gray-50 p-8 md:p-12 flex items-center justify-center">
+      <div className="md:w-1/2 bg-gray-50 h-full p-6 md:p-8 flex items-center justify-center overflow-auto">
         <div className="w-full max-w-md">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-800 mb-2">
               Kết nối đến vCenter Server
             </h2>
@@ -55,18 +79,25 @@ const LoginPage = ({ onConnect, isLoading }) => {
             </p>
           </div>
           
-          <div className="bg-white rounded-xl shadow-xl p-8 border border-gray-100">
+          <div className="bg-white rounded-xl shadow-xl p-6 border border-gray-100">
             {isLoading ? (
               <div className="text-center py-8">
                 <RefreshCw className="h-12 w-12 text-blue-500 mx-auto mb-4 animate-spin" />
                 <p className="text-gray-700 font-medium">Đang kết nối...</p>
               </div>
             ) : (
-              <VCenterConfig onSubmit={onConnect} isLoading={isLoading} />
+              <VCenterConfig 
+                onSubmit={handleConnect} 
+                isLoading={isLoading}
+                // Không truyền connectionError để không hiển thị trong form
+              />
             )}
           </div>
           
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-500 mb-2">
+              Thông tin đăng nhập mặc định: vcenter.example.com / administrator@vsphere.local
+            </p>
             <a 
               href="https://docs.vmware.com/en/VMware-vSphere/index.html" 
               target="_blank" 
@@ -85,15 +116,15 @@ const LoginPage = ({ onConnect, isLoading }) => {
   );
 };
 
-// Feature component for the left panel
+// Feature component for the left panel - Made more compact
 const Feature = ({ icon, title, description }) => (
   <div className="flex items-start">
-    <div className="mr-4 p-2 bg-blue-800 bg-opacity-50 rounded-lg">
+    <div className="mr-3 p-1.5 bg-blue-800 bg-opacity-50 rounded-lg">
       {icon}
     </div>
     <div>
-      <h3 className="font-semibold text-white mb-1">{title}</h3>
-      <p className="text-blue-200 text-sm">{description}</p>
+      <h3 className="font-semibold text-white mb-0.5 text-sm">{title}</h3>
+      <p className="text-blue-200 text-xs">{description}</p>
     </div>
   </div>
 );

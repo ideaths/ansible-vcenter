@@ -6,24 +6,21 @@ import { useVM } from './hooks/useVM';
 import { useAnsible } from './hooks/useAnsible';
 import VMList from './components/VMList';
 import VMForm from './components/VMForm';
-import VCenterConfig from './components/VCenterConfig';
 import LogViewer from './components/LogViewer';
 import LoadingOverlay from './components/LoadingOverlay';
 import apiService from './services/api';
-import { AlertCircle } from 'lucide-react';
-import MessageAlert from './components/MessageAlert';
 import DeleteConfirmDialog from './components/DeleteConfirmDialog';
-import Toast from './components/Toast';
+import Toast, { useToast } from './components/Toast';
 import LoginPage from './pages/LoginPage';
 
-// Import CSS standard - pas besoin de fichier CSS supplémentaire
-// Les améliorations seront ajoutées directement aux composants
+// Import CSS standard và các component khác
 
 function App() {
   const dispatch = useDispatch();
+  const toast = useToast(); // Sử dụng hook useToast
+  
   const [vms, setVms] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState({ text: '', type: '' });
   const [taskRunning, setTaskRunning] = useState(false);
   const [taskPower, setTaskPower] = useState(false);
   const [taskLog, setTaskLog] = useState([]);
@@ -31,10 +28,28 @@ function App() {
   const [showVCenterConfig, setShowVCenterConfig] = useState(false);
   const [powerMessage, setPowerMessage] = useState('');
 
-  const onMessage = (msg) => setMessage(msg);
+  // Hàm hiển thị thông báo sử dụng Toast
+  const onMessage = (msg) => {
+    if (msg.text) {
+      switch (msg.type) {
+        case 'error':
+          toast.error(msg.text);
+          break;
+        case 'success':
+          toast.success(msg.text);
+          break;
+        case 'info':
+          toast.info(msg.text);
+          break;
+        default:
+          toast.info(msg.text);
+      }
+    }
+  };
+  
   const onLog = (log) => setTaskLog(prev => Array.isArray(log) ? [...prev, ...log] : [...prev, log]);
 
-  const { vCenterConfig, vCenterConnected, connectToVCenter, disconnectVCenter } = 
+  const { vCenterConfig, vCenterConnected, connectToVCenter, disconnectVCenter, connectionError } = 
     useVCenter(onMessage, onLog);
 
   const { currentVm, showForm, showDeleteConfirm, setCurrentVm, setShowForm, 
@@ -100,16 +115,6 @@ function App() {
     }
   };
 
-  // Auto-hide messages after 5 seconds
-  useEffect(() => {
-    if (message.text) {
-      const timer = setTimeout(() => {
-        setMessage({ text: '', type: '' });
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [message]);
-
   // Restore loading state on mount  
   useEffect(() => {
     dispatch(restoreLoadingState());
@@ -118,23 +123,24 @@ function App() {
   // Nếu chưa kết nối vCenter, hiển thị trang login
   if (!vCenterConnected) {
     return (
-      <LoginPage 
-        onConnect={connectToVCenter}
-        isLoading={taskRunning}
-      />
+      <>
+        <Toast toasts={toast.toasts} removeToast={toast.removeToast} />
+        <LoginPage 
+          onConnect={connectToVCenter}
+          isLoading={taskRunning}
+          connectionError={connectionError}
+        />
+      </>
     );
   }
 
   // Otherwise show main content
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
+      <Toast toasts={toast.toasts} removeToast={toast.removeToast} />
       <LoadingOverlay taskPower={taskPower} powerMessage={powerMessage} />
-      <Toast 
-        message={message} 
-        onClose={() => setMessage({ text: '', type: '' })} 
-      />
       
-      {/* Header avec une ombre améliorée */}
+      {/* Header với một ombre améliorée */}
       <header className="bg-blue-700 text-white p-4 shadow-md" style={{
         background: 'linear-gradient(to right, #2563eb, #1d4ed8)',
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
@@ -184,7 +190,7 @@ function App() {
             onLog={onLog}
           />
           
-          {/* Log Viewer avec animation améliorée */}
+          {/* Log Viewer với animation améliorée */}
           {showLogs && (
             <LogViewer 
               logs={taskLog} 
@@ -214,19 +220,8 @@ function App() {
           isLoading={taskRunning}
         />
       )}
-      
-      {showVCenterConfig && (
-        <VCenterConfig 
-          config={vCenterConfig} 
-          onSubmit={connectToVCenter} 
-          onCancel={() => setShowVCenterConfig(false)} 
-          isLoading={taskRunning}
-          onDisconnect={disconnectVCenter}
-          isConnected={vCenterConnected}
-        />
-      )}
 
-      {/* Styles globaux injectés directement */}
+      {/* Style globaux injectés directement */}
       <style jsx global>{`
         button {
           transition: all 0.15s ease;
@@ -245,51 +240,6 @@ function App() {
         button:disabled {
           opacity: 0.7;
           cursor: not-allowed;
-        }
-
-        /* Animation du toast */
-        @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .toast {
-          animation: slideInRight 0.3s ease forwards;
-        }
-        
-        /* Amélioration des formulaires */
-        input:focus, select:focus {
-          outline: none;
-          border-color: #3b82f6;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-        }
-        
-        /* Amélioration du tableau */
-        table tbody tr:hover {
-          background-color: #eff6ff;
-        }
-        
-        /* Styles pour les badges d'état */
-        .statusBadge {
-          transition: all 0.2s ease;
-        }
-        
-        .statusRunning {
-          background-color: #d1fae5;
-          color: #065f46;
-          border: 1px solid #a7f3d0;
-        }
-        
-        .statusStopped {
-          background-color: #f3f4f6;
-          color: #4b5563;
-          border: 1px solid #e5e7eb;
-        }
-        
-        .statusDeleted {
-          background-color: #fee2e2;
-          color: #b91c1c;
-          border: 1px solid #fecaca;
         }
       `}</style>
     </div>

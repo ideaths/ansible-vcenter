@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { store } from '../store/store';
 import { startLoading, stopLoading } from '../store/loadingSlice';
+import { API_ERRORS, VCENTER_ERRORS, getErrorMessage } from '../constants/errorMessages';
 
 // Base URL của API
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
@@ -19,28 +20,43 @@ const apiClient = axios.create({
 apiClient.interceptors.response.use(
   response => response,
   error => {
-    // Xử lý lỗi từ server
     if (error.response) {
-      // Server trả về lỗi
-      console.error('API Error Response:', error.response.data);
-      return Promise.reject(error.response.data);
+      console.debug('API Response Error:', error.response.data);
+      
+      // Sử dụng mã lỗi từ server nếu có
+      const errorCode = error.response.data.errorCode;
+      const errorMessage = error.response.data.error;
+      
+      return Promise.resolve({ 
+        success: false, 
+        error: errorMessage || getErrorMessage(errorCode, API_ERRORS.SERVER_ERROR),
+        errorCode: errorCode,
+        source: 'server_response'
+      });
     } else if (error.request) {
-      // Request được gửi nhưng không nhận được response
-      console.error('API No Response:', error.request);
-      return Promise.reject({
-        success: false,
-        error: 'Không thể kết nối tới máy chủ'
+      console.debug('API No Response:', error.request);
+      
+      return Promise.resolve({ 
+        success: false, 
+        error: API_ERRORS.NETWORK,
+        errorCode: 'NETWORK_ERROR',
+        source: 'network'
       });
     } else {
-      // Lỗi khác
-      console.error('API Error:', error.message);
-      return Promise.reject({
-        success: false,
-        error: 'Lỗi không xác định'
+      console.debug('API Error:', error.message);
+      
+      return Promise.resolve({ 
+        success: false, 
+        error: error.message || API_ERRORS.UNKNOWN,
+        errorCode: 'CLIENT_ERROR',
+        source: 'client'
       });
     }
   }
 );
+
+
+
 
 const apiService = {
   /**
@@ -110,21 +126,41 @@ const apiService = {
    * @param {Object} config - Cấu hình vCenter
    * @returns {Promise<Object>} Kết quả kết nối
    */
+  // Update the connectToVCenter method to better handle errors:
   connectToVCenter: async (config) => {
     try {
       store.dispatch(startLoading({
         message: 'Đang kết nối tới vCenter...',
-        persist: true // cần persist vì thao tác có thể mất nhiều thời gian
+        persist: true
       }));
+      
       const response = await apiClient.post('/vcenter/connect', config);
       store.dispatch(stopLoading());
+      
+      // Nếu đã có lỗi từ interceptor, trả về nguyên vẹn
+      if (response.success === false) {
+        // Áp dụng getErrorMessage để chuyển đổi mã lỗi nếu cần
+        if (response.errorCode && !response.error) {
+          response.error = getErrorMessage(response.errorCode);
+        } else if (!response.error) {
+          response.error = VCENTER_ERRORS.UNKNOWN;
+        }
+        return response;
+      }
+      
       return response.data;
     } catch (error) {
       store.dispatch(stopLoading());
-      console.error('Lỗi kết nối vCenter:', error);
-      throw error;
+      console.debug('Unhandled Error:', error);
+      
+      return { 
+        success: false, 
+        error: error.message || VCENTER_ERRORS.UNKNOWN,
+        errorCode: 'EXCEPTION',
+        source: 'exception'
+      };
     }
-  },
+  },  
 
   /**
    * Thực hiện thay đổi trạng thái nguồn VM (start/stop) - Chạy Ansible ngay lập tức
@@ -201,5 +237,6 @@ export const executeAnsiblePlaybook = async (playbookName, params) => {
     throw error;
   }
 };
+
 
 export default apiService;

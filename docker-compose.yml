@@ -8,20 +8,15 @@ services:
       dockerfile: Dockerfile
     container_name: vm-management-backend
     restart: unless-stopped
-    privileged: true  # Cấp quyền cao cho container để Ansible hoạt động tốt hơn
     ports:
       - "3001:3001"
     volumes:
       - ./backend:/app
       - /app/node_modules  # Đây là thay đổi chính: dùng anonymous volume để bảo vệ node_modules
       - ./backend/data:/app/data
-      - ./backend/ansible:/etc/ansible/playbooks
-      - ansible-cache:/root/.ansible
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - ANSIBLE_HOST_KEY_CHECKING=False
-      - PYTHONUNBUFFERED=1
     networks:
       - vm-network
     extra_hosts:
@@ -36,6 +31,8 @@ services:
     restart: unless-stopped
     ports:
       - "3000:80"
+    environment:
+      - REACT_APP_API_URL=http://backend:3001/api
     depends_on:
       - backend
     networks:
@@ -44,6 +41,3 @@ services:
 networks:
   vm-network:
     driver: bridge
-
-volumes:
-  ansible-cache:  # Volume lưu trữ cache của Ansible

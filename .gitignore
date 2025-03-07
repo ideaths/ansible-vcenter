@@ -73,3 +73,6 @@ ehthumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# Additional files to ignore
+*.csv

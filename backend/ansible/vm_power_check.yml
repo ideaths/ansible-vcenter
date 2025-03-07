@@ -1,9 +1,0 @@
----
-# vm_power_check.yml - File này được include_tasks từ playbook chính
-# Mục đích: Xác định VM nào cần quản lý nguồn điện sau khi cập nhật
-
-# Thêm vào danh sách quản lý nguồn điện nếu VM đã thay đổi
-- name: Add to power management list if VM was changed
-  set_fact:
-    vms_power_changed: "{{ vms_power_changed + [vm_result.item] }}"
-  when: vm_result.changed | default(false)

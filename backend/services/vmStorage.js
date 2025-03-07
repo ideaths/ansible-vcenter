@@ -1,4 +1,3 @@
-// backend/services/vmStorage.js
 const fs = require('fs').promises;
 const path = require('path');
 const Papa = require('papaparse');
@@ -212,10 +211,16 @@ async function deleteVM(vmName) {
   }
 }
 
+const powerActionVM = async (vmName, action) => {
+  // Implement power action logic here
+  return { success: true, message: `VM ${action} successfully` };
+};
+
 module.exports = {
   readVMsFromCSV,
   saveVMsToCSV,
   addOrUpdateVM: addOrUpdateVM,
   deleteVM,
-  normalizeVMData
+  normalizeVMData,
+  powerActionVM
 };

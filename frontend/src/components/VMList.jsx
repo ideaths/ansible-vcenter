@@ -18,9 +18,8 @@ const VMList = ({
   onEditVM, 
   onDeleteVM, 
   onPowerAction, 
-  onRunAnsible,
   taskRunning,
-  taskPower, // Thêm prop mới nhận từ App.jsx
+  taskPower,  
   onRefresh,
   onMessage,
   onLog,
@@ -191,7 +190,6 @@ const filteredVMs = useMemo(() => {
         showLogs={showLogs}
         setShowLogs={setShowLogs}
         onAddVM={onAddVM}
-        onRunAnsible={onRunAnsible}
         taskRunning={taskRunning}
       />
 
@@ -226,13 +224,13 @@ const filteredVMs = useMemo(() => {
             guestOSMap={guestOSMap}
             vCenterConnected={vCenterConnected}
             taskRunning={taskRunning}
-            taskPower={taskPower} // Truyền xuống taskPower cho VMTable
+            taskPower={taskPower}            
             onEditVM={onEditVM}
             onDeleteVM={onDeleteVM}
             onPowerAction={onPowerAction}
             onAddVM={onAddVM}
             onRestoreVM={handleRestoreVM}
-            onMessage={onMessage} // Thêm onMessage
+            onMessage={onMessage}          
           />
         )}
       </div>

@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { restoreLoadingState } from './store/loadingSlice';
-import { useVCenter } from './hooks/useVCenter';
 import { useVM } from './hooks/useVM';
-import { useAnsible } from './hooks/useAnsible';
 import VMList from './components/VMList';
 import VMForm from './components/VMForm';
 import LogViewer from './components/LogViewer';
@@ -49,14 +47,9 @@ function App() {
   
   const onLog = (log) => setTaskLog(prev => Array.isArray(log) ? [...prev, ...log] : [...prev, log]);
 
-  const { vCenterConfig, vCenterConnected, connectToVCenter, disconnectVCenter, connectionError } = 
-    useVCenter(onMessage, onLog);
-
   const { currentVm, showForm, showDeleteConfirm, setCurrentVm, setShowForm, 
     setShowDeleteConfirm, handleSubmitVM, handleDeleteVM, handlePowerAction } = 
     useVM(onMessage, onLog, fetchVMs, setTaskPower);
-
-  const { ansibleRunning, runAnsible } = useAnsible(onMessage, onLog, fetchVMs);
 
   async function fetchVMs() {
     setLoading(true);
@@ -98,20 +91,13 @@ function App() {
   // Sửa lại để dùng với taskPower
   const handlePowerActionWithState = async (vm, action) => {
     setTaskPower(true);
-    setPowerMessage(`Đang chạy Ansible để ${action === 'start' ? 'khởi động' : 'dừng'} VM: ${vm.vm_name}`);
+    setPowerMessage(`Đang thay đổi trạng thái VM: ${vm.vm_name}`);
     
     try {
       await handlePowerAction(vm, action);
     } finally {
       setTaskPower(false);
       setPowerMessage('');
-    }
-  };
-  
-  // Handle running Ansible
-  const handleRunAnsible = async () => {
-    if (!ansibleRunning) {
-      await runAnsible();
     }
   };
 
@@ -182,7 +168,6 @@ function App() {
             onDeleteVM={handleDeleteConfirm}
             onPowerAction={handlePowerActionWithState}
             onConfigVCenter={() => setShowVCenterConfig(true)}
-            onRunAnsible={handleRunAnsible}
             taskRunning={taskRunning}
             taskPower={taskPower}
             onRefresh={fetchVMs}

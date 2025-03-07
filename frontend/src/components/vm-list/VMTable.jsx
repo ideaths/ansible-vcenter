@@ -17,52 +17,6 @@ const VMTable = ({
   onRestoreVM,
   onMessage
 }) => {
-  // Fonction pour déterminer la classe d'état
-  const getVMStatusDisplay = (vm) => {
-    if (vm.status === 'on' && vm.action === 'apply') {
-      return {
-        text: 'Đang chạy',
-        className: 'bg-green-100 text-green-800 border border-green-200'
-      };
-    } else if (vm.status === 'off' && vm.action === 'apply') {
-      return {
-        text: 'Đang dừng',
-        className: 'bg-gray-100 text-gray-700 border border-gray-200'
-      };
-    } else if (vm.action === 'destroy') {
-      return {
-        text: 'Deleted',
-        className: 'bg-red-100 text-red-800 border border-red-200'
-      };
-    }
-    return {
-      text: 'Không xác định',
-      className: 'bg-gray-100 text-gray-600 border border-gray-200'
-    };
-  };
-
-  // Style commun pour les boutons d'action
-  const actionButtonStyle = {
-    transition: 'all 0.15s ease',
-    borderRadius: '9999px',
-    padding: '0.375rem'
-  };
-
-  // Style hover pour les boutons d'action
-  const getHoverStyle = (color) => ({
-    transform: 'translateY(-2px)',
-    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-    backgroundColor: color
-  });
-
-  if (loading) {
-    return (
-      <div className="p-8 text-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700 mx-auto mb-4"></div>
-        <p className="text-gray-600">Đang tải dữ liệu...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="overflow-x-auto">
@@ -83,7 +37,6 @@ const VMTable = ({
         <tbody>
           {vms.length > 0 ? (
             vms.map((vm, index) => {
-              const statusDisplay = getVMStatusDisplay(vm);
               
               return (
                 <tr 
@@ -112,7 +65,6 @@ const VMTable = ({
                       {statusDisplay.text}
                     </span>
                     
-                    {/* Tags display */}
                     {vm.tags && (
                       <div className="mt-1.5 flex flex-wrap gap-1 justify-center">
                         {vm.tags.split(',').filter(Boolean).map(tag => (
@@ -146,7 +98,7 @@ const VMTable = ({
                           style={actionButtonStyle}
                           className={`text-amber-600 ${vm.action !== 'apply' ? 'opacity-50 cursor-not-allowed' : 'hover:text-amber-800 hover:bg-amber-50'}`}
                           disabled={taskPower || !vCenterConnected || vm.action !== 'apply'}
-                          title={vm.action !== 'apply' ? 'Không thể dừng VM có trạng thái "destroy"' : 'Dừng VM (Chạy Ansible ngay lập tức)'}
+                          title={vm.action !== 'apply' ? 'Không thể dừng VM có trạng thái "destroy"' : 'Dừng VM'}
                           onMouseOver={(e) => {
                             if (vm.action === 'apply' && !taskPower && vCenterConnected) {
                               Object.assign(e.currentTarget.style, getHoverStyle('#fff7ed'));
@@ -166,7 +118,7 @@ const VMTable = ({
                           style={actionButtonStyle}
                           className={`text-green-600 ${vm.action !== 'apply' ? 'opacity-50 cursor-not-allowed' : 'hover:text-green-800 hover:bg-green-50'}`}
                           disabled={taskPower || !vCenterConnected || vm.action !== 'apply'}
-                          title={vm.action !== 'apply' ? 'Không thể khởi động VM có trạng thái "destroy"' : 'Khởi động VM (Chạy Ansible ngay lập tức)'}
+                          title={vm.action !== 'apply' ? 'Không thể khởi động VM có trạng thái "destroy"' : 'Khởi động VM'}
                           onMouseOver={(e) => {
                             if (vm.action === 'apply' && !taskPower && vCenterConnected) {
                               Object.assign(e.currentTarget.style, getHoverStyle('#ecfdf5'));
@@ -182,7 +134,6 @@ const VMTable = ({
                         </button>
                       )}
 
-                      {/* Delete button - show when action is 'apply' */}
                       {vm.action === 'apply' && (
                         <button 
                           onClick={() => onDeleteVM(vm)}
@@ -205,7 +156,6 @@ const VMTable = ({
                         </button>
                       )}
 
-                      {/* Restore button - show when action is 'destroy' */}
                       {vm.action === 'destroy' && (
                         <button 
                           onClick={() => onRestoreVM(vm)}
@@ -228,7 +178,6 @@ const VMTable = ({
                         </button>
                       )}
 
-                      {/* Edit button - always show */}
                       <button 
                         onClick={() => onEditVM(vm)}
                         style={actionButtonStyle}

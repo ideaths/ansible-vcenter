@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 const { decrypt } = require('../utils/encryption');
 
 function decryptConfig(configPath) {
@@ -8,13 +7,19 @@ function decryptConfig(configPath) {
       if (fs.existsSync(configPath)) {
         const encryptedData = fs.readFileSync(configPath, 'utf8');
         const decryptedData = decrypt(encryptedData);
-        req.vCenterConfig = JSON.parse(decryptedData);
+        if (decryptedData) {
+          req.vCenterConfig = JSON.parse(decryptedData);
+        } else {
+          req.vCenterConfig = null;
+        }
       } else {
         req.vCenterConfig = null;
       }
       next();
     } catch (error) {
-      next(error);
+      console.error('Config decryption error:', error);
+      req.vCenterConfig = null;
+      next();
     }
   };
 }

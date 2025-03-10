@@ -14,21 +14,35 @@ router.use(decryptConfig(CONFIG_PATH));
 router.post('/vcenter/connect', (req, res) => {
   try {
     const config = {
-      host: req.body.host,
+      hostname: req.body.host,
       username: req.body.username,
       password: req.body.password,
-      port: req.body.port || 443
+      datacenter: req.body.datacenter || 'Home',
+      validateCerts: req.body.validateCerts || false
     };
     
-    // Mã hóa toàn bộ object config
+    // Encrypt the config before saving
     const encryptedData = encrypt(JSON.stringify(config));
     
-    // Lưu dữ liệu đã mã hóa
+    // Create data directory if it doesn't exist
+    const dataDir = path.dirname(CONFIG_PATH);
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+    
+    // Save encrypted data
     fs.writeFileSync(CONFIG_PATH, encryptedData);
     
-    res.json({ success: true, message: 'vCenter configuration saved' });
+    res.json({ 
+      success: true, 
+      message: 'vCenter configuration saved successfully' 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error('Error saving vCenter config:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: 'Failed to save vCenter configuration' 
+    });
   }
 });
 

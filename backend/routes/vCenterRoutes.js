@@ -13,35 +13,55 @@ router.use(decryptConfig(CONFIG_PATH));
 
 router.post('/vcenter/connect', (req, res) => {
   try {
-    const config = {
-      hostname: req.body.host,
-      username: req.body.username,
-      password: req.body.password,
-      datacenter: req.body.datacenter || 'Home',
-      validateCerts: req.body.validateCerts || false
-    };
+    // Validate required fields
+    const { host, username, password, datacenter } = req.body;
     
-    // Encrypt the config before saving
-    const encryptedData = encrypt(JSON.stringify(config));
-    
-    // Create data directory if it doesn't exist
-    const dataDir = path.dirname(CONFIG_PATH);
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
+    if (!host || !username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Host, username and password are required'
+      });
     }
     
-    // Save encrypted data
-    fs.writeFileSync(CONFIG_PATH, encryptedData);
+    const config = {
+      hostname: host,
+      username: username,
+      password: password,
+      datacenter: datacenter || 'Home',
+      validateCerts: req.body.validateCerts === true
+    };
     
-    res.json({ 
-      success: true, 
-      message: 'vCenter configuration saved successfully' 
-    });
+    // Convert to string before encryption
+    const configString = JSON.stringify(config);
+    
+    try {
+      const encryptedData = encrypt(configString);
+      
+      // Create data directory if it doesn't exist
+      const dataDir = path.dirname(CONFIG_PATH);
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      
+      // Save encrypted data
+      fs.writeFileSync(CONFIG_PATH, encryptedData);
+      
+      res.json({ 
+        success: true, 
+        message: 'vCenter configuration saved successfully' 
+      });
+    } catch (encryptError) {
+      console.error('Encryption error:', encryptError);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to encrypt configuration: ' + encryptError.message
+      });
+    }
   } catch (error) {
     console.error('Error saving vCenter config:', error);
     res.status(500).json({ 
       success: false, 
-      error: 'Failed to save vCenter configuration' 
+      error: 'Failed to save vCenter configuration: ' + error.message 
     });
   }
 });

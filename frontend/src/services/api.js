@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { store } from '../store/store';
 import { startLoading, stopLoading } from '../store/loadingSlice';
-import { API_ERRORS, VCENTER_ERRORS, getErrorMessage } from '../constants/errorMessages';
+import { API_ERRORS, VCENTER_ERRORS, getErrorMessage } from '../constants/messages';
 
 // Base URL của API
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';

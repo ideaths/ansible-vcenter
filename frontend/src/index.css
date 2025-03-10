@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Base styles */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -16,20 +17,17 @@ code {
     monospace;
 }
 
-/* index.css - Thêm vào cuối file CSS hiện tại */
-
-/* Hiệu ứng chuyển động chung */
+/* Global transitions and effects */
 * {
   transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* Làm mịn góc và thêm bóng đổ cho các card và button */
-.bg-white, .rounded-lg, button, input, select, .card, 
+/* Rounded corners and shadows */
+.bg-white, .rounded-lg, button, input, select, 
 .shadow, .shadow-sm, .shadow-md, .shadow-lg {
   border-radius: 0.375rem;
 }
 
-/* Nâng cấp shadow */
 .shadow-sm {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 1px 3px 0 rgba(0, 0, 0, 0.1);
 }
@@ -42,29 +40,34 @@ code {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-/* Header nâng cấp */
+/* Header styles */
 header.bg-blue-700 {
   background: linear-gradient(to right, #2563eb, #1d4ed8);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Nút bấm đẹp hơn */
+/* Button enhancements */
 button {
   transform: translateY(0);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-button:hover {
+button:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-button:active {
+button:active:not(:disabled) {
   transform: translateY(0);
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* Cải thiện bảng VM */
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Table enhancements */
 table {
   border-collapse: separate;
   border-spacing: 0;
@@ -104,7 +107,7 @@ table tbody td {
   vertical-align: middle;
 }
 
-/* Hiệu ứng cho các badge và tag */
+/* Badge and tag styles */
 .rounded-full {
   transition: all 0.2s ease;
 }
@@ -114,7 +117,7 @@ table tbody td {
   transform: translateY(-1px);
 }
 
-/* Cải thiện cho các input, select */
+/* Input field enhancements */
 input, select {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -122,9 +125,10 @@ input, select {
 input:focus, select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: none;
 }
 
-/* Animation cho toast/notification */
+/* Animation keyframes */
 @keyframes slideInRight {
   from {
     transform: translateX(100%);
@@ -136,11 +140,6 @@ input:focus, select:focus {
   }
 }
 
-.toast-container .toast {
-  animation: slideInRight 0.3s ease forwards;
-}
-
-/* Animation cho modals */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -161,6 +160,27 @@ input:focus, select:focus {
   }
 }
 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Modal animations */
 .formOverlay {
   animation: fadeIn 0.2s ease forwards;
 }
@@ -169,7 +189,12 @@ input:focus, select:focus {
   animation: scaleIn 0.3s ease forwards;
 }
 
-/* Cải thiện cho log viewer */
+/* Toast notifications */
+.toast-container .toast {
+  animation: slideInRight 0.3s ease forwards;
+}
+
+/* LogViewer styles */
 .logContainer {
   scrollbar-width: thin;
   scrollbar-color: #4b5563 #1f2937;
@@ -189,40 +214,30 @@ input:focus, select:focus {
   border-radius: 20px;
 }
 
-/* Animation cho log entries */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .logEntry {
   animation: fadeInUp 0.2s ease forwards;
 }
 
-/* Làm mịn các action button */
+/* Icon button styles */
 .iconBtn, .iconBtnSuccess, .iconBtnDanger, .iconBtnWarning, .iconBtnEdit, .iconBtnPrimary {
   border-radius: 9999px;
   padding: 0.375rem;
   transition: all 0.15s ease;
 }
 
-.iconBtn:hover, .iconBtnSuccess:hover, .iconBtnDanger:hover, 
-.iconBtnWarning:hover, .iconBtnEdit:hover, .iconBtnPrimary:hover {
+.iconBtn:hover:not(:disabled), .iconBtnSuccess:hover:not(:disabled), 
+.iconBtnDanger:hover:not(:disabled), .iconBtnWarning:hover:not(:disabled), 
+.iconBtnEdit:hover:not(:disabled), .iconBtnPrimary:hover:not(:disabled) {
   transform: translateY(-1px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Customize các button chính */
+/* Gradient buttons */
 .btnPrimary {
   background: linear-gradient(to bottom, #3b82f6, #2563eb);
 }
 
-.btnPrimary:hover {
+.btnPrimary:hover:not(:disabled) {
   background: linear-gradient(to bottom, #2563eb, #1d4ed8);
 }
 
@@ -230,7 +245,7 @@ input:focus, select:focus {
   background: linear-gradient(to bottom, #10b981, #059669);
 }
 
-.btnSuccess:hover {
+.btnSuccess:hover:not(:disabled) {
   background: linear-gradient(to bottom, #059669, #047857);
 }
 
@@ -238,47 +253,46 @@ input:focus, select:focus {
   background: linear-gradient(to bottom, #ef4444, #dc2626);
 }
 
-.btnDanger:hover {
+.btnDanger:hover:not(:disabled) {
   background: linear-gradient(to bottom, #dc2626, #b91c1c);
 }
 
-/* Cải thiện cho các bộ lọc */
-.container {
-  border-radius: 0.375rem 0.375rem 0 0;
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-/* Hiệu ứng loading mượt mà hơn */
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin {
-  animation: spin 0.75s linear infinite;
-}
-
-/* Làm đẹp pagination */
-.pagination button {
-  min-width: 2.5rem;
-  height: 2.5rem;
-  display: flex;
+/* Status badges */
+.statusBadge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.375rem;
-  margin: 0 0.25rem;
-  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-.pagination button.active {
-  background-color: #3b82f6;
-  color: white;
+.statusRunning {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
 }
 
-/* Cải thiện form fields */
+.statusStopped {
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
+}
+
+.statusDeleted {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* Form field styling */
 .label {
   font-weight: 500;
   margin-bottom: 0.25rem;
@@ -287,35 +301,14 @@ input:focus, select:focus {
 }
 
 .input, .select {
-  padding: 0.5rem;
+  padding: 0.5rem 0.75rem;
   width: 100%;
   border: 1px solid #d1d5db;
   border-radius: 0.375rem;
   background-color: white;
 }
 
-.input:focus, .select:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-/* Hover effects */
-.hover-rise {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.hover-rise:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-/* Custom cursor styles */
-.cursor-pointer {
-  cursor: pointer;
-}
-
-/* Enhanced VM tags display */
+/* Enhanced VM tags */
 .tag {
   display: inline-flex;
   align-items: center;
@@ -345,41 +338,30 @@ input:focus, select:focus {
   color: #1e40af;
 }
 
-/* Cải thiện status badges */
-.statusBadge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  display: inline-flex;
+/* Spinner animation */
+.animate-spin {
+  animation: spin 0.75s linear infinite;
+}
+
+/* Pagination styling */
+.pagination button {
+  min-width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0.375rem;
+  margin: 0 0.25rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
 }
 
-.statusRunning {
-  background-color: #d1fae5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+.pagination button.active {
+  background-color: #3b82f6;
+  color: white;
 }
 
-.statusStopped {
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: 1px solid #e5e7eb;
-}
-
-.statusDeleted {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-}
-
-/* Mượt mà hóa scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Cải thiện các dialog xác nhận */
+/* Dialog animations */
 .dialog-container {
   animation: fadeIn 0.2s ease forwards;
 }

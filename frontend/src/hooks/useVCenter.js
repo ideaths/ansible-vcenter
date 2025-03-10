@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import apiService from '../services/api';
 import { useDispatch } from 'react-redux';
 import { stopLoading } from '../store/loadingSlice';
-import { VCENTER_ERRORS, getErrorMessage } from '../constants/errorMessages';
+import { VCENTER_ERRORS, getErrorMessage } from '../constants/messages';
 
 export const useVCenter = (onMessage, onLog) => {
   const dispatch = useDispatch();

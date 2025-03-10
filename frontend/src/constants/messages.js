@@ -1,20 +1,32 @@
+// frontend/src/constants/messages.js
+// Consolidated message constants for the application
+
+// Success messages
 export const SUCCESS_MESSAGES = {
   VM_CREATED: 'VM đã được thêm thành công!',
   VM_UPDATED: 'VM đã được cập nhật thành công!',
   VM_DELETED: 'VM đã được đánh dấu xóa. Vui lòng nhấn "Chạy Ansible" để thực hiện!',
+  VM_RESTORED: 'VM đã được khôi phục thành công',
   ANSIBLE_COMPLETED: 'Các thay đổi đã được áp dụng thành công lên vCenter!',
   VCENTER_CONNECTED: 'Đã kết nối thành công đến vCenter: ',
-  VCENTER_DISCONNECTED: 'Đã ngắt kết nối khỏi vCenter'
+  VCENTER_DISCONNECTED: 'Đã ngắt kết nối khỏi vCenter',
+  POWER_ACTION_COMPLETED: 'VM đã được {action} thành công'
 };
 
+// Error messages
 export const ERROR_MESSAGES = {
   VCENTER_CONNECTION_FAILED: 'Không thể kết nối đến vCenter: ',
   VM_LIST_FAILED: 'Lỗi khi tải danh sách VM: ',
   VM_ACTION_FAILED: 'Lỗi khi thao tác VM: ',
   ANSIBLE_FAILED: 'Lỗi khi chạy Ansible: ',
-  POWER_ACTION_FAILED: 'Lỗi khi thay đổi trạng thái nguồn: '
+  POWER_ACTION_FAILED: 'Lỗi khi thay đổi trạng thái nguồn: ',
+  VM_IP_CONFLICT: 'IP {ip} đã được sử dụng bởi VM "{vmName}", vui lòng chọn IP khác',
+  VM_NAME_CONFLICT: 'Tên VM "{vmName}" đã tồn tại, vui lòng chọn tên khác',
+  VALIDATION_ERROR: 'Dữ liệu không hợp lệ: ',
+  POWER_ACTION_DENIED: 'Không thể {action} VM {vmName} vì VM đang có trạng thái "destroy"'
 };
 
+// Information messages
 export const INFO_MESSAGES = {
   LOADING_VM_LIST: 'Đang lấy danh sách VM...',
   CONNECTING_VCENTER: 'Đang kết nối tới vCenter...',
@@ -23,14 +35,8 @@ export const INFO_MESSAGES = {
   NO_VMS_FOUND: 'Không có VM nào. Hãy thêm VM mới để bắt đầu.',
   NOT_CONNECTED: 'Vui lòng kết nối vCenter để xem danh sách VM.'
 };
-// File: src/constants/errorMessages.js
 
-/**
- * Các thông báo lỗi được chuẩn hóa cho ứng dụng
- * Sử dụng constants để đảm bảo tính nhất quán và dễ bảo trì
- */
-
-// Lỗi kết nối vCenter
+// vCenter specific error messages
 export const VCENTER_ERRORS = {
   UNKNOWN: 'Lỗi không xác định khi kết nối vCenter',
   NETWORK: 'Không thể kết nối đến máy chủ vCenter',
@@ -44,7 +50,7 @@ export const VCENTER_ERRORS = {
   INVALID_HOSTNAME: 'Hostname vCenter không hợp lệ'
 };
 
-// Lỗi API chung
+// API generic error messages
 export const API_ERRORS = {
   NETWORK: 'Không thể kết nối đến máy chủ',
   TIMEOUT: 'Yêu cầu đã hết thời gian chờ',
@@ -55,7 +61,12 @@ export const API_ERRORS = {
   UNKNOWN: 'Lỗi không xác định khi thực hiện yêu cầu'
 };
 
-// Hàm helper để map mã lỗi từ server về thông báo thân thiện
+/**
+ * Maps error codes to human-readable messages
+ * @param {string} errorCode - The error code from the server
+ * @param {string} defaultMessage - Default message if no mapping exists
+ * @returns {string} Human-readable error message
+ */
 export const getErrorMessage = (errorCode, defaultMessage) => {
   switch (errorCode) {
     case 'CONNECTION_FAILED':
@@ -75,4 +86,16 @@ export const getErrorMessage = (errorCode, defaultMessage) => {
     default:
       return defaultMessage || VCENTER_ERRORS.UNKNOWN;
   }
+};
+
+/**
+ * Format message with variables
+ * @param {string} message - Message template with placeholders like {name}
+ * @param {Object} variables - Object with values to replace placeholders
+ * @returns {string} Formatted message
+ */
+export const formatMessage = (message, variables = {}) => {
+  return message.replace(/{(\w+)}/g, (match, key) => {
+    return variables[key] !== undefined ? variables[key] : match;
+  });
 };

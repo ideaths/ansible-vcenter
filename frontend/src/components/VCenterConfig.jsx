@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { RefreshCw, Server, Lock, User, Database, Globe, Shield } from 'lucide-react';
-import styles from '../styles/components/EnhancedVCenterConfig.module.css';
+import styles from '../styles/components/VCenterConfig.module.css';
 
 const VCenterConfig = ({ onSubmit, isLoading }) => {
   const [formData, setFormData] = useState({

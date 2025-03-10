@@ -1,0 +1,96 @@
+---
+# manage_vms_from_csv.yml - Playbook để quản lý VM trên vCenter từ dữ liệu CSV
+- name: Manage VMs (Apply or Destroy) from CSV file
+  hosts: localhost
+  gather_facts: false
+  vars:
+    vcenter_hostname: "vcenter.idevops.io.vn"
+    vcenter_username: "administrator@vsphere.local"
+    vcenter_password: ""
+    vcenter_validate_certs: false
+    datacenter_name: "Home"
+    csv_file: "vms.csv"
+  
+  tasks:
+    - name: Read VM data from CSV file
+      community.general.read_csv:
+        path: "{{ csv_file }}"
+      register: vm_data
+      delegate_to: localhost
+    
+    # Khởi tạo danh sách trống
+    - name: Initialize empty lists for apply and destroy actions
+      set_fact:
+        apply_vms: []
+        destroy_vms: []
+
+    # Lặp qua mỗi dòng và thêm vào danh sách tương ứng
+    - name: Sort VMs based on action field
+      set_fact:
+        apply_vms: "{{ apply_vms + [item] }}"
+      with_items: "{{ vm_data.list }}"
+      when: item.action == 'apply'
+
+    - name: Sort VMs for destruction
+      set_fact:
+        destroy_vms: "{{ destroy_vms + [item] }}"
+      with_items: "{{ vm_data.list }}"
+      when: item.action == 'destroy'
+
+    - name: Apply VMs on vCenter
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        datacenter: "{{ datacenter_name }}"
+        name: "{{ item.vm_name }}"
+        state: present
+        folder: "{{ item.folder | default('/') }}"
+        guest_id: "{{ item.guest_id | default('centos8_64Guest') }}"
+        template: "{{ item.template | default(omit) }}"
+        hardware:
+          memory_mb: "{{ item.memory_mb | default(1024) | int }}"
+          num_cpus: "{{ item.num_cpus | default(1) | int }}"
+          num_cpu_cores_per_socket: "{{ item.num_cpu_cores | default(1) | int }}"
+          scsi: "{{ item.scsi_type | default('paravirtual') }}"
+          boot_firmware: "{{ item.boot_firmware | default('bios') }}"
+          hotadd_cpu: true
+          hotadd_memory: true
+        networks:
+          - name: "{{ item.network | default('VM Network') }}"
+            ip: "{{ item.ip | default(omit) }}"
+            netmask: "{{ item.netmask | default(omit) }}"
+            gateway: "{{ item.gateway | default(omit) }}"
+            type: "{{ item.network_type | default('static') }}"
+            device_type: "{{ item.network_device | default('vmxnet3') }}"
+        disk:
+          - size_gb: "{{ item.disk_size_gb | default(20) | int }}"
+            type: "{{ item.disk_type | default('thin') }}"
+            datastore: "{{ item.datastore | default(omit) }}"
+        wait_for_ip_address: "{{ (item.wait_for_ip | default('yes')) | bool }}"
+        customization:
+          hostname: "{{ item.hostname | default(item.vm_name) }}"
+          dns_servers: "{{ (item.dns_servers | default('')).split(',') if (item.dns_servers | default('')) != '' else omit }}"
+          domain: "{{ item.domain | default(omit) }}"
+      delegate_to: localhost
+      loop: "{{ apply_vms }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+      when: apply_vms | length > 0
+      
+    - name: Destroy VMs from vCenter
+      community.vmware.vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vcenter_validate_certs }}"
+        datacenter: "{{ datacenter_name }}"
+        name: "{{ item.vm_name }}"
+        state: absent
+        force: yes
+      delegate_to: localhost
+      loop: "{{ destroy_vms }}"
+      loop_control:
+        label: "{{ item.vm_name }}"
+      when: destroy_vms | length > 0

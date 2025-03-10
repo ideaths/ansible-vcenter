@@ -1,0 +1,73 @@
+.formOverlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-y-auto py-4;
+}
+
+.formContainer {
+  @apply bg-white rounded-lg shadow-xl w-full max-w-7xl max-h-full overflow-y-auto;
+}
+
+.formContent {
+  @apply p-6;
+}
+
+.formHeader {
+  @apply flex justify-between items-center mb-4;
+}
+
+.formTitle {
+  @apply text-xl font-semibold;
+}
+
+/* Thay đổi grid-cols-3 thành grid-cols-4 */
+.formGrid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.formFooter {
+  @apply mt-6 flex justify-end space-x-3;
+}
+
+.fieldGroup {
+  @apply mt-1 block w-full;
+}
+
+.input {
+  @apply border border-gray-300 rounded-md shadow-sm p-2 w-full;
+}
+
+.input:focus {
+  @apply outline-none ring-2 ring-blue-500 border-blue-500;
+}
+
+.label {
+  @apply block text-sm font-medium text-gray-700;
+}
+
+.select {
+  composes: input;
+}
+
+.tagsSection {
+  @apply col-span-full mt-4;
+}
+
+.tagInput {
+  @apply flex gap-2 mt-1;
+}
+
+.tagsList {
+  @apply flex flex-wrap gap-2 mt-2;
+}
+
+.tag {
+  @apply inline-flex items-center px-2 py-1 rounded-full text-sm 
+    bg-blue-100 text-blue-700 hover:bg-blue-200;
+}
+
+.tagRemove {
+  @apply ml-1 text-blue-500 hover:text-blue-700;
+}
+
+.sectionHeader {
+  @apply col-span-full text-lg font-medium text-gray-700 border-b pb-2 mt-4 mb-2;
+}

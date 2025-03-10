@@ -1,0 +1,41 @@
+.container {
+  @apply bg-gray-800 text-gray-200 rounded-lg shadow p-4 flex flex-col h-64;
+}
+
+.header {
+  @apply flex justify-between items-center p-4 border-b border-gray-700;
+}
+
+.title {
+  @apply text-xl font-semibold text-gray-200;
+}
+
+.logContainer {
+  @apply p-4 space-y-1 font-mono text-sm overflow-y-auto flex-grow;
+  @apply text-gray-200;
+}
+
+.logEntry {
+  @apply py-1 border-b border-gray-700;
+}
+
+.timestamp {
+  @apply text-gray-500;
+}
+
+.emptyState {
+  @apply py-2 text-gray-400;
+}
+
+.loadingIndicator {
+  @apply flex items-center text-blue-400;
+}
+
+.overlay {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+.modal {
+  @apply bg-gray-800 rounded-lg shadow-xl w-full max-w-3xl mx-4 flex flex-col;
+  height: 80vh;
+}

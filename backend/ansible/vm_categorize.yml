@@ -1,0 +1,27 @@
+---
+# vm_categorize.yml - File này được include_tasks từ playbook chính
+# Mục đích: Xác định một VM là mới hay cần cập nhật
+
+# Kiểm tra xem VM đã tồn tại hay chưa
+- name: Check if VM exists on vCenter
+  community.vmware.vmware_vm_info:
+    hostname: "{{ vcenter_hostname }}"
+    username: "{{ vcenter_username }}"
+    password: "{{ vcenter_password }}"
+    validate_certs: "{{ vcenter_validate_certs }}"
+    vm_name: "{{ current_vm.vm_name }}"
+  delegate_to: localhost
+  register: vm_exists_check
+  ignore_errors: yes
+
+# Kiểm tra xem VM đã tồn tại hay chưa dựa vào kết quả kiểm tra
+- name: Add to new VMs list if VM doesn't exist
+  set_fact:
+    new_vms: "{{ new_vms + [current_vm] }}"
+  when: vm_exists_check.failed is defined
+
+# Thêm vào danh sách cập nhật nếu VM đã tồn tại  
+- name: Add to update VMs list if VM exists
+  set_fact:
+    update_vms: "{{ update_vms + [current_vm] }}"
+  when: vm_exists_check.failed is not defined

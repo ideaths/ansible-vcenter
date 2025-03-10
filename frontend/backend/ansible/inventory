@@ -1,0 +1,10 @@
+# Inventory file cho Ansible
+
+[localhost]
+127.0.0.1 ansible_connection=local
+
+[vcenter:vars]
+ansible_connection=local
+
+[vcenter]
+# vCenter - được thêm tự động bởi ứng dụng khi cấu hình

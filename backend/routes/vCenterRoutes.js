@@ -1,62 +1,52 @@
 // backend/routes/vCenterRoutes.js
 const express = require('express');
-const vCenterConfig = require('../config/vcenter');
-
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
+const { encrypt } = require('../utils/encryption');
+const decryptConfig = require('../middlewares/configDecrypt');
 
-// Sửa route path để khớp với frontend
-router.post('/vcenter/connect', async (req, res) => {
+const CONFIG_PATH = path.join(__dirname, '../data/vcenter-config.json');
+
+// Middleware để giải mã config
+router.use(decryptConfig(CONFIG_PATH));
+
+router.post('/vcenter/connect', (req, res) => {
   try {
-    const config = req.body;
+    const config = {
+      host: req.body.host,
+      username: req.body.username,
+      password: req.body.password,
+      port: req.body.port || 443
+    };
     
-    // Kiểm tra các trường bắt buộc
-    if (!config.hostname || !config.username || !config.password) {
-      return res.status(400).json({
-        success: false,
-        error: 'Thiếu thông tin kết nối'
-      });
-    }
-
-    // Kiểm tra kết nối
-    const isConnected = await vCenterConfig.checkVCenterConnection(config);
+    // Mã hóa toàn bộ object config
+    const encryptedData = encrypt(JSON.stringify(config));
     
-    if (isConnected === true) { // Kiểm tra chính xác giá trị boolean
-      // Lưu cấu hình nếu kết nối thành công
-      await vCenterConfig.saveVCenterConfig(config);
-      
-      res.json({
-        success: true,
-        message: 'Kết nối thành công đến vCenter'
-      });
-    } else {
-      res.status(401).json({
-        success: false,
-        error: 'Không thể kết nối đến vCenter với thông tin đã cung cấp'
-      });
-    }
+    // Lưu dữ liệu đã mã hóa
+    fs.writeFileSync(CONFIG_PATH, encryptedData);
+    
+    res.json({ success: true, message: 'vCenter configuration saved' });
   } catch (error) {
-    console.error('Lỗi khi kết nối vCenter:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Lỗi không xác định khi kết nối vCenter'
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Thêm route để lấy config
-router.get('/vcenter/config', async (req, res) => {
-  try {
-    const config = await vCenterConfig.getVCenterConfig();
-    res.json({
+router.get('/vcenter/config', (req, res) => {
+  // req.vCenterConfig đã được giải mã bởi middleware
+  if (req.vCenterConfig) {
+    // Trả về thông tin đã được giải mã
+    res.json({ 
       success: true,
-      config
+      config: {
+        host: req.vCenterConfig.host,
+        username: req.vCenterConfig.username,
+        // Không trả về password
+        port: req.vCenterConfig.port
+      }
     });
-  } catch (error) {
-    console.error('Lỗi khi lấy cấu hình vCenter:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Lỗi không xác định khi lấy cấu hình vCenter'
-    });
+  } else {
+    res.status(404).json({ success: false, error: 'No configuration found' });
   }
 });
 

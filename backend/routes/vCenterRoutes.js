@@ -35,12 +35,15 @@ router.post('/vcenter/connect', (req, res) => {
     const configString = JSON.stringify(config);
     
     try {
-      const encryptedData = encrypt(configString);
-      
       // Create data directory if it doesn't exist
       const dataDir = path.dirname(CONFIG_PATH);
       if (!fs.existsSync(dataDir)) {
         fs.mkdirSync(dataDir, { recursive: true });
+      }
+      
+      const encryptedData = encrypt(configString);
+      if (!encryptedData) {
+        throw new Error('Encryption failed');
       }
       
       // Save encrypted data

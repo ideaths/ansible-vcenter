@@ -1,14 +1,14 @@
 const fs = require('fs');
+const path = require('path');
 const { decrypt } = require('../utils/encryption');
 
 function decryptConfig(configPath) {
   return (req, res, next) => {
     try {
-      // Check if file exists and has content
       if (fs.existsSync(configPath)) {
         const encryptedData = fs.readFileSync(configPath, 'utf8');
         
-        // Skip decryption if file is empty or invalid
+        // Handle empty or whitespace-only content
         if (!encryptedData || encryptedData.trim() === '') {
           req.vCenterConfig = null;
           return next();
@@ -22,11 +22,17 @@ function decryptConfig(configPath) {
             req.vCenterConfig = null;
           }
         } catch (decryptError) {
+          // Log error but don't throw it
           console.error('Decryption failed:', decryptError);
           req.vCenterConfig = null;
         }
       } else {
-        // Initialize empty config file if it doesn't exist
+        // Create directory if it doesn't exist
+        const dir = path.dirname(configPath);
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+        // Initialize with empty config
         fs.writeFileSync(configPath, '', { encoding: 'utf8' });
         req.vCenterConfig = null;
       }

@@ -20,6 +20,21 @@ RUN apk add --no-cache \
 # Tạo thư mục làm việc
 WORKDIR /app
 
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy app source
+COPY . .
+
+# Create data directory and set permissions
+RUN mkdir -p data && chmod -R 755 data
+
+# Create .env file if not exists and set permissions
+RUN touch .env && chmod 644 .env
+
 # Tạo thư mục cần thiết
 RUN mkdir -p \
     data \

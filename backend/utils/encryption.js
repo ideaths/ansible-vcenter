@@ -1,13 +1,19 @@
 const crypto = require('crypto');
 require('dotenv').config();
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY; 
+let ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+// If not in env, try to load from Docker environment
+if (!ENCRYPTION_KEY && process.env.DOCKER_ENCRYPTION_KEY) {
+  ENCRYPTION_KEY = process.env.DOCKER_ENCRYPTION_KEY;
+}
+
 const IV_LENGTH = 16;
 const ALGORITHM = 'aes-256-cbc';
 
 function validateEncryptionKey() {
   if (!ENCRYPTION_KEY) {
-    throw new Error('ENCRYPTION_KEY environment variable is not set');
+    throw new Error('ENCRYPTION_KEY environment variable is not set. Please check your .env file or Docker environment variables.');
   }
   if (ENCRYPTION_KEY.length !== 32) {
     throw new Error('ENCRYPTION_KEY must be exactly 32 characters long');

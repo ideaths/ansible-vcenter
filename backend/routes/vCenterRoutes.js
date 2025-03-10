@@ -67,20 +67,22 @@ router.post('/vcenter/connect', (req, res) => {
 });
 
 router.get('/vcenter/config', (req, res) => {
-  // req.vCenterConfig đã được giải mã bởi middleware
   if (req.vCenterConfig) {
-    // Trả về thông tin đã được giải mã
     res.json({ 
       success: true,
       config: {
-        host: req.vCenterConfig.host,
+        hostname: req.vCenterConfig.hostname,
         username: req.vCenterConfig.username,
-        // Không trả về password
-        port: req.vCenterConfig.port
+        datacenter: req.vCenterConfig.datacenter,
+        validateCerts: req.vCenterConfig.validateCerts
       }
     });
   } else {
-    res.status(404).json({ success: false, error: 'No configuration found' });
+    res.json({ 
+      success: false, 
+      error: 'No configuration found',
+      config: null 
+    });
   }
 });
 

@@ -1,7 +1,1 @@
-{
-  "hostname": "vcenter.idevops.io.vn",
-  "username": "administrator@vsphere.local",
-  "password": "",
-  "datacenter": "Home",
-  "validateCerts": false
-}
+{}

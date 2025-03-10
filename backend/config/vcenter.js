@@ -25,8 +25,10 @@ async function getVCenterConfig() {
     const configData = await fs.readFile(CONFIG_PATH, 'utf8');
     const config = JSON.parse(configData);
     
-    // Don't decrypt password here - we keep it encrypted in storage
-    // It will be decrypted by the middleware when needed
+    // Decrypt password if needed
+    if (config.password && typeof config.password === 'string' && config.password.includes(':')) {
+      config.password = decrypt(config.password);
+    }
     
     return config;
   } catch (error) {

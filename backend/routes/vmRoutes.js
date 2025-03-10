@@ -11,41 +11,48 @@ const router = express.Router();
 const runAnsiblePlaybook = async (playbook, extraVars) => {
   return new Promise((resolve, reject) => {
     try {
-      // Convert relative path to absolute path
       const playbookPath = path.resolve(__dirname, '..', 'ansible', playbook);
-      
       const command = 'ansible-playbook';
       const args = [
         playbookPath,
-        '-e', JSON.stringify(extraVars)
+        '-e', JSON.stringify(extraVars),
+        '-v' // Add verbose output
       ];
       
-      console.log('Running Ansible playbook:', command, args.join(' '));
+      console.log('Running Ansible playbook with command:', command, args.join(' '));
       
       const ansibleProcess = spawn(command, args);
-      
       let output = '';
       let errorOutput = '';
 
       ansibleProcess.stdout.on('data', (data) => {
-        output += data.toString();
-        console.log(data.toString());
+        const str = data.toString();
+        output += str;
+        console.log('[Ansible stdout]:', str);
       });
 
       ansibleProcess.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-        console.error(data.toString());
+        const str = data.toString();
+        errorOutput += str;
+        console.error('[Ansible stderr]:', str);
+      });
+
+      ansibleProcess.on('error', (error) => {
+        console.error('[Ansible process error]:', error);
+        reject(new Error(`Failed to spawn Ansible process: ${error.message}`));
       });
 
       ansibleProcess.on('close', (code) => {
+        console.log('[Ansible process closed] with code:', code);
         if (code === 0) {
           resolve({ success: true, output });
         } else {
-          reject(new Error(`Ansible playbook failed with code ${code}: ${errorOutput}`));
+          reject(new Error(`Ansible playbook failed with code ${code}\nOutput: ${output}\nError: ${errorOutput}`));
         }
       });
     } catch (error) {
-      reject(error); 
+      console.error('[Ansible execution error]:', error);
+      reject(error);
     }
   });
 };

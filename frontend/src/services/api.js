@@ -191,17 +191,29 @@ const apiService = {
    */
   runAnsible: async () => {
     try {
+      store.dispatch(startLoading({
+        message: 'Đang thực thi Ansible...',
+        persist: true
+      }));
+      
       const response = await apiClient.post('/ansible/run');
-      if (!response.data.success) {
-        throw new Error(response.data.error || 'Failed to run Ansible');
+      if (!response.data || !response.data.success) {
+        throw new Error(response.data?.error || 'Failed to run Ansible');
       }
       return response.data;
     } catch (error) {
       console.error('Error running Ansible:', error);
       store.dispatch(stopLoading());
+      
+      // Improved error handling
+      const errorMessage = error.response?.data?.error || error.message;
+      const errorDetails = error.response?.data?.details;
+      
       throw {
-        error: error.response?.data?.error || error.message,
-        details: error.response?.data?.details
+        success: false,
+        error: errorMessage,
+        details: errorDetails,
+        message: `Ansible execution failed: ${errorMessage}`
       };
     }
   },

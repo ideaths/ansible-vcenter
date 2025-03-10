@@ -1,90 +1,62 @@
 // backend/routes/vCenterRoutes.js
 const express = require('express');
+const vCenterConfig = require('../config/vcenter');
+const configDecrypt = require('../middlewares/configDecrypt');
+
 const router = express.Router();
-const path = require('path');
-const fs = require('fs');
-const { encrypt } = require('../utils/encryption');
-const decryptConfig = require('../middlewares/configDecrypt');
 
-const CONFIG_PATH = path.join(__dirname, '../data/vcenter-config.json');
-
-// Middleware để giải mã config
-router.use(decryptConfig(CONFIG_PATH));
-
-router.post('/vcenter/connect', (req, res) => {
+// Apply the middleware specifically to this route instead of calling it directly
+router.post('/vcenter/connect', configDecrypt, async (req, res) => {
   try {
-    // Validate required fields
-    const { host, username, password, datacenter } = req.body;
+    const config = req.body;
     
-    if (!host || !username || !password) {
+    // Kiểm tra các trường bắt buộc
+    if (!config.hostname || !config.username || !config.password) {
       return res.status(400).json({
         success: false,
-        error: 'Host, username and password are required'
+        error: 'Thiếu thông tin kết nối'
       });
     }
+
+    // Kiểm tra kết nối
+    const isConnected = await vCenterConfig.checkVCenterConnection(config);
     
-    const config = {
-      hostname: host,
-      username: username,
-      password: password,
-      datacenter: datacenter || 'Home',
-      validateCerts: req.body.validateCerts === true
-    };
-    
-    // Convert to string before encryption
-    const configString = JSON.stringify(config);
-    
-    try {
-      // Create data directory if it doesn't exist
-      const dataDir = path.dirname(CONFIG_PATH);
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
+    if (isConnected === true) { // Kiểm tra chính xác giá trị boolean
+      // Lưu cấu hình nếu kết nối thành công
+      await vCenterConfig.saveVCenterConfig(config);
       
-      const encryptedData = encrypt(configString);
-      if (!encryptedData) {
-        throw new Error('Encryption failed');
-      }
-      
-      // Save encrypted data
-      fs.writeFileSync(CONFIG_PATH, encryptedData);
-      
-      res.json({ 
-        success: true, 
-        message: 'vCenter configuration saved successfully' 
+      res.json({
+        success: true,
+        message: 'Kết nối thành công đến vCenter'
       });
-    } catch (encryptError) {
-      console.error('Encryption error:', encryptError);
-      res.status(500).json({
+    } else {
+      res.status(401).json({
         success: false,
-        error: 'Failed to encrypt configuration: ' + encryptError.message
+        error: 'Không thể kết nối đến vCenter với thông tin đã cung cấp'
       });
     }
   } catch (error) {
-    console.error('Error saving vCenter config:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to save vCenter configuration: ' + error.message 
+    console.error('Lỗi khi kết nối vCenter:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Lỗi không xác định khi kết nối vCenter'
     });
   }
 });
 
-router.get('/vcenter/config', (req, res) => {
-  if (req.vCenterConfig) {
-    res.json({ 
+// Thêm route để lấy config
+router.get('/vcenter/config', async (req, res) => {
+  try {
+    const config = await vCenterConfig.getVCenterConfig();
+    res.json({
       success: true,
-      config: {
-        hostname: req.vCenterConfig.hostname,
-        username: req.vCenterConfig.username,
-        datacenter: req.vCenterConfig.datacenter,
-        validateCerts: req.vCenterConfig.validateCerts
-      }
+      config
     });
-  } else {
-    res.json({ 
-      success: false, 
-      error: 'No configuration found',
-      config: null 
+  } catch (error) {
+    console.error('Lỗi khi lấy cấu hình vCenter:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Lỗi không xác định khi lấy cấu hình vCenter'
     });
   }
 });

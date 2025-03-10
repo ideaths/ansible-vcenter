@@ -1,61 +1,106 @@
+// backend/utils/encryption.js
 const crypto = require('crypto');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
-let ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-
-// If not in env, try to load from Docker environment
-if (!ENCRYPTION_KEY && process.env.DOCKER_ENCRYPTION_KEY) {
-  ENCRYPTION_KEY = process.env.DOCKER_ENCRYPTION_KEY;
-}
-
-const IV_LENGTH = 16;
+// Constants for encryption/decryption
 const ALGORITHM = 'aes-256-cbc';
+const IV_LENGTH = 16; // For AES, this is always 16
+const KEY_LENGTH = 32; // 256 bits
 
-function validateEncryptionKey() {
-  if (!ENCRYPTION_KEY) {
-    throw new Error('ENCRYPTION_KEY environment variable is not set. Please check your .env file or Docker environment variables.');
-  }
-  if (ENCRYPTION_KEY.length !== 32) {
-    throw new Error('ENCRYPTION_KEY must be exactly 32 characters long');
-  }
-}
+// Path for storing the encryption key
+const KEY_PATH = path.join(__dirname, '../data/encryption_key');
 
-function encrypt(text) {
-  if (!text) {
-    throw new Error('Text to encrypt cannot be empty or undefined');
-  }
-  
-  validateEncryptionKey();
-  
-  const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY), iv);
-  let encrypted = cipher.update(text.toString());
-  encrypted = Buffer.concat([encrypted, cipher.final()]);
-  return iv.toString('hex') + ':' + encrypted.toString('hex');
-}
-
-function decrypt(text) {
-  if (!text) {
-    return null;
-  }
-
+/**
+ * Get or generate the encryption key
+ * @returns {Buffer} Encryption key
+ */
+function getEncryptionKey() {
   try {
-    validateEncryptionKey();
+    // Try to read existing key
+    if (fs.existsSync(KEY_PATH)) {
+      return Buffer.from(fs.readFileSync(KEY_PATH, 'utf8'), 'hex');
+    }
     
-    const textParts = text.split(':');
-    if (textParts.length !== 2) {
+    // Generate a new key
+    const key = crypto.randomBytes(KEY_LENGTH);
+    
+    // Ensure directory exists
+    const dir = path.dirname(KEY_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    
+    // Save the key
+    fs.writeFileSync(KEY_PATH, key.toString('hex'));
+    return key;
+  } catch (error) {
+    console.error('Error handling encryption key:', error);
+    throw new Error('Failed to get or generate encryption key');
+  }
+}
+
+/**
+ * Encrypt a text string
+ * @param {string} text Text to encrypt
+ * @returns {string} Encrypted text (format: iv:encryptedData)
+ */
+function encrypt(text) {
+  try {
+    if (!text) {
+      return '';
+    }
+    
+    const key = getEncryptionKey();
+    const iv = crypto.randomBytes(IV_LENGTH);
+    const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
+    
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    // Return IV and encrypted data as one string
+    return `${iv.toString('hex')}:${encrypted}`;
+  } catch (error) {
+    console.error('Encryption error:', error);
+    throw new Error('Failed to encrypt text');
+  }
+}
+
+/**
+ * Decrypt an encrypted string
+ * @param {string} encryptedText Encrypted text (format: iv:encryptedData)
+ * @returns {string} Decrypted text
+ */
+function decrypt(encryptedText) {
+  try {
+    if (!encryptedText) {
+      return '';
+    }
+    
+    // Split the encrypted text into IV and data
+    const parts = encryptedText.split(':');
+    
+    if (parts.length !== 2) {
       throw new Error('Invalid encrypted text format');
     }
-    const iv = Buffer.from(textParts[0], 'hex');
-    const encryptedText = Buffer.from(textParts[1], 'hex');
-    const decipher = crypto.createDecipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY), iv);
-    let decrypted = decipher.update(encryptedText);
-    decrypted = Buffer.concat([decrypted, decipher.final()]);
-    return decrypted.toString();
+    
+    const iv = Buffer.from(parts[0], 'hex');
+    const encrypted = parts[1];
+    const key = getEncryptionKey();
+    
+    const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
+    
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
   } catch (error) {
     console.error('Decryption error:', error);
-    return null;
+    throw error; // Re-throw to let the caller handle it
   }
 }
 
-module.exports = { encrypt, decrypt };
+module.exports = {
+  encrypt,
+  decrypt
+};

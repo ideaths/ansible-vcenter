@@ -5,7 +5,7 @@ apply,k8s-m03,4,4096,50,192.168.1.33,template-redhat8,rhel8_64Guest,VM Network,d
 apply,k8s-w01,4,8192,50,192.168.1.34,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,k8s-w01,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,"app1,app2",on
 apply,k8s-w02,4,8192,50,192.168.1.35,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,k8s-w02,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,prod,on
 apply,k8s-w03,4,8192,50,192.168.1.36,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,k8s-w03,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,,on
-destroy,test,2,4096,50,192.168.1.10,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,test,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,"app1,uat",off
-destroy,abd,2,4096,50,192.168.1.18,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,abd,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,,off
+apply,test,2,4096,50,192.168.1.10,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,test,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,"app1,uat",off
+apply,abd,2,4096,50,192.168.1.18,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,abd,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,,off
 destroy,ffff,2,4096,50,192.168.1.17,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,ffff,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,,off
 destroy,testhhh,2,4096,50,192.168.1.18,template-redhat8,rhel8_64Guest,VM Network,datastore1,/,testhhh,255.255.255.0,192.168.1.1,1,paravirtual,bios,static,vmxnet3,thin,yes,191.168.1.53,idevops.io.vn,,off

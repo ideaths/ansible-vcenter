@@ -1,48 +1,44 @@
-const fs = require('fs');
-const path = require('path');
+// backend/middlewares/configDecrypt.js
 const { decrypt } = require('../utils/encryption');
 
-function decryptConfig(configPath) {
-  return (req, res, next) => {
-    try {
-      if (fs.existsSync(configPath)) {
-        const encryptedData = fs.readFileSync(configPath, 'utf8');
-        
-        // Handle empty or whitespace-only content
-        if (!encryptedData || encryptedData.trim() === '') {
-          req.vCenterConfig = null;
-          return next();
-        }
-
+/**
+ * Middleware to handle decryption of sensitive configuration data
+ * 
+ * This middleware checks for encrypted fields in request bodies and attempts
+ * to decrypt them before passing the request to the route handler.
+ */
+const configDecrypt = (req, res, next) => {
+  try {
+    const config = req.body;
+    
+    // Check if the password field might be encrypted
+    if (config && config.password) {
+      // Only attempt to decrypt if it matches the encrypted format (has a : character)
+      if (typeof config.password === 'string' && config.password.includes(':')) {
         try {
-          const decryptedData = decrypt(encryptedData.trim());
-          if (decryptedData) {
-            req.vCenterConfig = JSON.parse(decryptedData);
-          } else {
-            req.vCenterConfig = null;
-          }
-        } catch (decryptError) {
-          // Log error but don't throw it
-          console.error('Decryption failed:', decryptError);
-          req.vCenterConfig = null;
+          // Try to decrypt the password
+          config.password = decrypt(config.password);
+        } catch (error) {
+          // Log the error and return a 400 response
+          console.error('Decryption error:', error);
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid encrypted data format'
+          });
         }
-      } else {
-        // Create directory if it doesn't exist
-        const dir = path.dirname(configPath);
-        if (!fs.existsSync(dir)) {
-          fs.mkdirSync(dir, { recursive: true });
-        }
-        // Initialize with empty config
-        fs.writeFileSync(configPath, '', { encoding: 'utf8' });
-        req.vCenterConfig = null;
       }
-      next();
-    } catch (error) {
-      console.error('Config handling error:', error);
-      req.vCenterConfig = null;
-      next();
+      // If not in encrypted format, assume it's already plain text
     }
-  };
-}
+    
+    // Continue to the next middleware/route handler
+    next();
+  } catch (error) {
+    console.error('Error in configDecrypt middleware:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error processing configuration'
+    });
+  }
+};
 
-module.exports = decryptConfig;
+module.exports = configDecrypt;

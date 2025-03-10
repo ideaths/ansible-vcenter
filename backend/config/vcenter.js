@@ -1,7 +1,8 @@
-// backend/config/vcenter.js
+// backend/config/vcenter.js with enhanced security
 const fs = require('fs').promises;
 const path = require('path');
 const { spawn } = require('child_process');
+const { encrypt, decrypt } = require('../utils/encryption');
 
 // Đường dẫn đến file cấu hình
 const CONFIG_PATH = path.join(__dirname, '../data/vcenter-config.json');
@@ -22,7 +23,12 @@ async function getVCenterConfig() {
     }
 
     const configData = await fs.readFile(CONFIG_PATH, 'utf8');
-    return JSON.parse(configData);
+    const config = JSON.parse(configData);
+    
+    // Don't decrypt password here - we keep it encrypted in storage
+    // It will be decrypted by the middleware when needed
+    
+    return config;
   } catch (error) {
     console.error('Lỗi khi đọc cấu hình vCenter:', error);
     return DEFAULT_CONFIG;
@@ -50,6 +56,13 @@ async function saveVCenterConfig(config) {
 
     // Merge với cấu hình mặc định
     const fullConfig = { ...DEFAULT_CONFIG, ...config };
+    
+    // Encrypt password if it exists and isn't already encrypted
+    if (fullConfig.password && 
+        typeof fullConfig.password === 'string' && 
+        !fullConfig.password.includes(':')) {
+      fullConfig.password = encrypt(fullConfig.password);
+    }
 
     // Ghi vào file JSON
     await fs.writeFile(
@@ -83,8 +96,11 @@ const DEFAULT_CONFIG = {
  * @returns {Promise<string>} Đường dẫn đến file tạm
  */
 const createTempPythonScript = async (config) => {
+  // We use the decrypted password for the connection test
+  const password = config.password;
+  
   // Create base64 auth string outside of template literal
-  const authString = Buffer.from(`${config.username}:${config.password}`).toString('base64');
+  const authString = Buffer.from(`${config.username}:${password}`).toString('base64');
   
   const scriptContent = `
 import ssl
@@ -122,7 +138,7 @@ if __name__ == "__main__":
 `;
 
   const tempFilePath = path.join(__dirname, '../data/temp_vcenter_check.py');
-  await fs.writeFile(tempFilePath, scriptContent); // Thay thế writeFileSync bằng writeFile
+  await fs.writeFile(tempFilePath, scriptContent);
   return tempFilePath;
 };
 

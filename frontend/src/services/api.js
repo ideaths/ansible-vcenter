@@ -55,9 +55,6 @@ apiClient.interceptors.response.use(
   }
 );
 
-
-
-
 const apiService = {
   /**
    * Lấy danh sách VM
@@ -188,24 +185,25 @@ const apiService = {
     }
   },
 
-  
   /**
    * Chạy Ansible để thực hiện các thay đổi đã đăng ký lên vCenter
    * @returns {Promise<Object>} Kết quả thao tác Ansible
    */
   runAnsible: async () => {
     try {
-      store.dispatch(startLoading({
-        message: 'Đang thực thi Ansible...',
-        persist: true
-      }));
       const response = await apiClient.post('/ansible/run');
+      if (!response.data.success) {
+        throw new Error(response.data.error || 'Failed to run Ansible');
+      }
       return response.data;
     } catch (error) {
-      console.error('Lỗi khi chạy Ansible:', error);
-      throw error;
+      console.error('Error running Ansible:', error);
+      store.dispatch(stopLoading());
+      throw {
+        error: error.response?.data?.error || error.message,
+        details: error.response?.data?.details
+      };
     }
-    // Không stopLoading ở đây vì cần đợi kiểm tra trạng thái hoàn thành
   },
 
   /**
@@ -237,6 +235,5 @@ export const executeAnsiblePlaybook = async (playbookName, params) => {
     throw error;
   }
 };
-
 
 export default apiService;

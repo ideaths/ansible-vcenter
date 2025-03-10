@@ -11,9 +11,12 @@ const router = express.Router();
 const runAnsiblePlaybook = async (playbook, extraVars) => {
   return new Promise((resolve, reject) => {
     try {
+      // Convert relative path to absolute path
+      const playbookPath = path.resolve(__dirname, '..', 'ansible', playbook);
+      
       const command = 'ansible-playbook';
       const args = [
-        playbook,
+        playbookPath,
         '-e', JSON.stringify(extraVars)
       ];
       
@@ -23,42 +26,26 @@ const runAnsiblePlaybook = async (playbook, extraVars) => {
       
       let output = '';
       let errorOutput = '';
-      
+
       ansibleProcess.stdout.on('data', (data) => {
-        const chunk = data.toString();
-        // Skip deprecation warnings in output
-        if (!chunk.includes('DEPRECATION WARNING')) {
-          output += chunk;
-          console.log('Ansible output:', chunk);
-        }
+        output += data.toString();
+        console.log(data.toString());
       });
-      
+
       ansibleProcess.stderr.on('data', (data) => {
-        const chunk = data.toString();
-        // Only collect real errors, not deprecation warnings
-        if (!chunk.includes('DEPRECATION WARNING')) {
-          errorOutput += chunk;
-          console.error('Ansible error:', chunk);
-        }
+        errorOutput += data.toString();
+        console.error(data.toString());
       });
-      
+
       ansibleProcess.on('close', (code) => {
-        // Accept both code 0 and code 2 as success if there are no real errors
-        if (code === 0 || (code === 2 && !errorOutput.trim())) {
-          console.log('Ansible playbook executed successfully');
-          resolve({
-            success: true,
-            output: output,
-            code: code
-          });
+        if (code === 0) {
+          resolve({ success: true, output });
         } else {
-          console.error('Ansible playbook failed with code:', code);
-          const error = errorOutput.trim() || 'Unknown Ansible execution error';
-          reject(new Error(error));
+          reject(new Error(`Ansible playbook failed with code ${code}: ${errorOutput}`));
         }
       });
     } catch (error) {
-      reject(error);
+      reject(error); 
     }
   });
 };
